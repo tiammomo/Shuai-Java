@@ -1,0 +1,4 @@
+# SPI Service Provider Configuration for SerializationService
+# Each line contains the fully qualified name of a service provider implementation
+com.shuai.spi.JsonSerializationService
+com.shuai.spi.XmlSerializationService

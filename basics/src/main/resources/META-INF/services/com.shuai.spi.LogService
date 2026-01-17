@@ -1,0 +1,4 @@
+# SPI Service Provider Configuration for LogService
+# Each line contains the fully qualified name of a service provider implementation
+com.shuai.spi.ConsoleLogService
+com.shuai.spi.FileLogService
