@@ -1,96 +1,121 @@
 package com.shuai.rabbitmq.api;
 
-import java.util.Map;
+import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.BuiltinExchangeType;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
+
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.TimeoutException;
 
 /**
  * RabbitMQ 生产者 API 演示
  *
- * 包含内容：
- * - 连接创建
- * - Channel 操作
- * - Exchange 声明
- * - Queue 声明
- * - Binding 创建
- * - 消息发送
- * - 发布确认
- * - 事务消息
- *
- * 代码位置: [RabbitMqProducerDemo.java](src/main/java/com/shuai/rabbitmq/api/RabbitMqProducerDemo.java)
+ * 【运行方式】
+ *   1. 确保 Docker RabbitMQ 服务运行: docker-compose up -d
+ *   2. 运行主方法
  *
  * @author Shuai
  */
 public class RabbitMqProducerDemo {
 
+    private static final String HOST = "localhost";
+    private static final int PORT = 5672;
+    private static final String USERNAME = "guest";
+    private static final String PASSWORD = "guest";
+    private static final String VIRTUAL_HOST = "/";
+
+    public static void main(String[] args) {
+        RabbitMqProducerDemo demo = new RabbitMqProducerDemo();
+
+        try {
+            // 创建连接
+            demo.createConnection();
+
+            // Channel 操作
+            demo.channelOperation();
+
+            // Exchange 声明
+            demo.declareExchange();
+
+            // Queue 声明
+            demo.declareQueue();
+
+            // Binding 创建
+            demo.createBinding();
+
+            // 发送消息
+            demo.sendMessage();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     /**
      * 创建连接
-     *
-     * 【核心配置】
-     *   - host: RabbitMQ 服务器地址
-     *   - port: 端口（5672 默认）
-     *   - username: 用户名
-     *   - password: 密码
-     *   - virtualHost: 虚拟主机
-     *
-     * 【代码示例】
-     *   ConnectionFactory factory = new ConnectionFactory();
-     *   factory.setHost("localhost");
-     *   factory.setPort(5672);
-     *   factory.setUsername("guest");
-     *   factory.setPassword("guest");
-     *   Connection connection = factory.newConnection();
      */
-    public void createConnection() {
-        MockConnection connection = new MockConnection();
+    public void createConnection() throws Exception {
+        System.out.println("\n=== 创建连接 ===");
+
+        ConnectionFactory factory = new ConnectionFactory();
+        factory.setHost(HOST);
+        factory.setPort(PORT);
+        factory.setUsername(USERNAME);
+        factory.setPassword(PASSWORD);
+        factory.setVirtualHost(VIRTUAL_HOST);
+
+        Connection connection = factory.newConnection();
+        System.out.println("连接创建成功: " + connection.getClass().getSimpleName());
+
         connection.close();
+        System.out.println("连接已关闭");
     }
 
     /**
      * Channel 操作
-     *
-     * 【生命周期】
-     *   - 创建: connection.createChannel()
-     *   - 使用: 发送消息、声明队列等
-     *   - 关闭: channel.close()
-     *
-     * 【代码示例】
-     *   Channel channel = connection.createChannel();
-     *   channel.basicPublish(exchange, routingKey, props, message);
      */
-    public void channelOperation() {
-        MockConnection connection = new MockConnection();
-        MockChannel channel = connection.createChannel();
-        channel.basicPublish("exchange", "routing-key", null, "message".getBytes());
+    public void channelOperation() throws Exception {
+        System.out.println("\n=== Channel 操作 ===");
+
+        Connection connection = createConnection();
+        Channel channel = connection.createChannel();
+
+        // 开启发布确认
         channel.confirmSelect();
+        System.out.println("发布确认已开启");
+
         channel.close();
         connection.close();
     }
 
     /**
      * Exchange 声明
-     *
-     * 【Exchange 类型】
-     *   - DIRECT: 精确匹配路由键
-     *   - FANOUT: 忽略路由键，广播到所有队列
-     *   - TOPIC: 通配符匹配（* 匹配一个词，# 匹配零个或多个词）
-     *   - HEADERS: 基于消息头属性匹配
-     *
-     * 【代码示例】
-     *   channel.exchangeDeclare("my-exchange", BuiltinExchangeType.DIRECT, true);
-     *
-     * 【参数说明】
-     *   durable: 持久化
-     *   autoDelete: 自动删除
-     *   internal: 内部使用
      */
-    public void declareExchange() {
-        MockConnection connection = new MockConnection();
-        MockChannel channel = connection.createChannel();
+    public void declareExchange() throws Exception {
+        System.out.println("\n=== Exchange 声明 ===");
 
-        channel.exchangeDeclare("direct-exchange", "DIRECT", true);
-        channel.exchangeDeclare("fanout-exchange", "FANOUT", true);
-        channel.exchangeDeclare("topic-exchange", "TOPIC", true);
-        channel.exchangeDeclare("headers-exchange", "HEADERS", true);
+        Connection connection = createConnection();
+        Channel channel = connection.createChannel();
+
+        // DIRECT - 精确匹配
+        channel.exchangeDeclare("demo-direct", BuiltinExchangeType.DIRECT, true);
+        System.out.println("DIRECT Exchange 创建成功: demo-direct");
+
+        // FANOUT - 广播
+        channel.exchangeDeclare("demo-fanout", BuiltinExchangeType.FANOUT, true);
+        System.out.println("FANOUT Exchange 创建成功: demo-fanout");
+
+        // TOPIC - 通配符匹配
+        channel.exchangeDeclare("demo-topic", BuiltinExchangeType.TOPIC, true);
+        System.out.println("TOPIC Exchange 创建成功: demo-topic");
+
+        // HEADERS - 基于消息头
+        channel.exchangeDeclare("demo-headers", BuiltinExchangeType.HEADERS, true);
+        System.out.println("HEADERS Exchange 创建成功: demo-headers");
 
         channel.close();
         connection.close();
@@ -98,33 +123,27 @@ public class RabbitMqProducerDemo {
 
     /**
      * Queue 声明
-     *
-     * 【代码示例】
-     *   channel.queueDeclare("my-queue", true, false, false, null);
-     *
-     * 【参数说明】
-     *   durable: 队列持久化
-     *   exclusive: 独占队列
-     *   autoDelete: 自动删除
-     *   arguments: 扩展参数
-     *
-     * 【扩展参数】
-     *   x-message-ttl: 消息过期时间（毫秒）
-     *   x-expires: 队列过期时间
-     *   x-max-length: 队列最大长度
-     *   x-dead-letter-exchange: 死信交换机
      */
-    public void declareQueue() {
-        MockConnection connection = new MockConnection();
-        MockChannel channel = connection.createChannel();
+    public void declareQueue() throws Exception {
+        System.out.println("\n=== Queue 声明 ===");
 
-        channel.queueDeclare("my-queue", true, false, false, null);
+        Connection connection = createConnection();
+        Channel channel = connection.createChannel();
+
+        // 基础队列
+        channel.queueDeclare("demo-queue", true, false, false, null);
+        System.out.println("基础队列创建成功: demo-queue");
+
+        // 临时队列
         channel.queueDeclare("temp-queue", false, true, true, null);
+        System.out.println("临时队列创建成功: temp-queue");
 
+        // 带 TTL 的队列
         Map<String, Object> args = new HashMap<>();
-        args.put("x-message-ttl", 60000);
+        args.put("x-message-ttl", 60000);  // 60秒
         args.put("x-max-length", 10000);
         channel.queueDeclare("ttl-queue", true, false, false, args);
+        System.out.println("TTL 队列创建成功: ttl-queue");
 
         channel.close();
         connection.close();
@@ -132,25 +151,22 @@ public class RabbitMqProducerDemo {
 
     /**
      * Binding 创建
-     *
-     * 【Binding 类型】
-     *   - Queue Binding: 队列绑定到 Exchange
-     *   - Exchange Binding: Exchange 绑定到 Exchange
-     *
-     * 【代码示例】
-     *   channel.queueBind("my-queue", "my-exchange", "my-routing-key");
-     *
-     * 【通配符规则】
-     *   *: 匹配一个单词
-     *   #: 匹配零个或多个单词
      */
-    public void createBinding() {
-        MockConnection connection = new MockConnection();
-        MockChannel channel = connection.createChannel();
+    public void createBinding() throws Exception {
+        System.out.println("\n=== Binding 创建 ===");
 
-        channel.queueBind("order-queue", "order-exchange", "order.created");
-        channel.queueBind("payment-queue", "payment-exchange", "payment.*");
-        channel.queueBind("log-queue", "log-exchange", "#");
+        Connection connection = createConnection();
+        Channel channel = connection.createChannel();
+
+        // 队列绑定到 Exchange
+        channel.queueBind("demo-queue", "demo-direct", "demo-key");
+        System.out.println("Binding 创建成功: demo-queue -> demo-direct [demo-key]");
+
+        channel.queueBind("demo-queue", "demo-topic", "order.*");
+        System.out.println("Binding 创建成功: demo-queue -> demo-topic [order.*]");
+
+        channel.queueBind("demo-queue", "demo-fanout", "");
+        System.out.println("Binding 创建成功: demo-queue -> demo-fanout");
 
         channel.close();
         connection.close();
@@ -158,141 +174,45 @@ public class RabbitMqProducerDemo {
 
     /**
      * 发送消息
-     *
-     * 【代码示例】
-     *   channel.basicPublish("exchange", "routing-key", null, message.getBytes());
-     *
-     * 【参数说明】
-     *   exchange: 交换机名称
-     *   routingKey: 路由键
-     *   props: 消息属性
-     *   body: 消息体
-     *
-     * 【发送选项】
-     *   - mandatory: 消息不可路由时是否返回
-     *   - immediate: 是否有消费者立即消费
      */
-    public void sendMessage() {
-        MockConnection connection = new MockConnection();
-        MockChannel channel = connection.createChannel();
+    public void sendMessage() throws Exception {
+        System.out.println("\n=== 发送消息 ===");
 
-        channel.basicPublish("test-exchange", "test-key", "消息1".getBytes());
-        channel.basicPublish("test-exchange", "urgent", "紧急消息".getBytes());
+        Connection connection = createConnection();
+        Channel channel = connection.createChannel();
+
+        // 确保 Exchange 和 Queue 存在
+        channel.exchangeDeclare("demo-topic", BuiltinExchangeType.TOPIC, true);
+        channel.queueDeclare("demo-queue", true, false, false, null);
+        channel.queueBind("demo-queue", "demo-topic", "order.*");
+
+        // 发送消息
+        byte[] messageBody = "Hello RabbitMQ!".getBytes(StandardCharsets.UTF_8);
+
+        // 使用默认 Exchange
+        channel.basicPublish("", "demo-queue", null, messageBody);
+        System.out.println("消息发送成功: demo-queue");
+
+        // 使用 Topic Exchange
+        channel.basicPublish("demo-topic", "order.created", null,
+                "订单创建消息".getBytes(StandardCharsets.UTF_8));
+        System.out.println("消息发送成功: demo-topic [order.created]");
+
+        channel.basicPublish("demo-topic", "order.paid", null,
+                "订单支付消息".getBytes(StandardCharsets.UTF_8));
+        System.out.println("消息发送成功: demo-topic [order.paid]");
 
         channel.close();
         connection.close();
     }
 
-    /**
-     * 发布确认
-     *
-     * 【确认机制】
-     *   - 同步确认: channel.waitForConfirms()
-     *   - 异步确认: ConfirmListener
-     *
-     * 【代码示例】
-     *   channel.confirmSelect();
-     *   channel.addConfirmListener(new ConfirmListener() {
-     *       public void handleAck(long seq, boolean multiple) {}
-     *       public void handleNack(long seq, boolean multiple) {}
-     *   });
-     *   boolean confirmed = channel.waitForConfirms();
-     *
-     * 【说明】
-     *   发布确认确保消息已到达 Broker
-     *   同步确认会阻塞，异步确认性能更好
-     */
-    public void publishConfirm() {
-        MockConnection connection = new MockConnection();
-        MockChannel channel = connection.createChannel();
-
-        channel.confirmSelect();
-        channel.addConfirmListener();
-        channel.basicPublish("exchange", "key", "message".getBytes());
-        channel.waitForConfirms();
-
-        channel.close();
-        connection.close();
-    }
-
-    /**
-     * 事务消息
-     *
-     * 【代码示例】
-     *   channel.txSelect();
-     *   try {
-     *       channel.basicPublish("exchange", "key", null, message.getBytes());
-     *       channel.txCommit();
-     *   } catch (Exception e) {
-     *       channel.txRollback();
-     *   }
-     *
-     * 【说明】
-     *   - 性能较低，不推荐高吞吐场景
-     *   - 与发布确认互斥
-     *   - 确保消息原子性
-     */
-    public void transactionMessage() {
-        MockConnection connection = new MockConnection();
-        MockChannel channel = connection.createChannel();
-
-        channel.txSelect();
-        channel.basicPublish("tx-exchange", "tx-key", null, "事务消息1".getBytes());
-        channel.basicPublish("tx-exchange", "tx-key", null, "事务消息2".getBytes());
-        channel.txCommit();
-
-        channel.close();
-        connection.close();
-    }
-
-    // ========== 模拟类 ==========
-
-    static class MockConnection {
-        public MockChannel createChannel() {
-            return new MockChannel();
-        }
-
-        public void close() {
-        }
-    }
-
-    static class MockChannel {
-
-        public void basicPublish(String exchange, String routingKey, byte[] props, byte[] body) {
-        }
-
-        public void basicPublish(String exchange, String routingKey, byte[] body) {
-        }
-
-        public void confirmSelect() {
-        }
-
-        public void addConfirmListener() {
-        }
-
-        public boolean waitForConfirms() {
-            return true;
-        }
-
-        public void exchangeDeclare(String name, String type, boolean durable) {
-        }
-
-        public void queueDeclare(String name, boolean durable, boolean exclusive, boolean autoDelete, Map<String, Object> args) {
-        }
-
-        public void queueBind(String queue, String exchange, String routingKey) {
-        }
-
-        public void txSelect() {
-        }
-
-        public void txCommit() {
-        }
-
-        public void txRollback() {
-        }
-
-        public void close() {
-        }
+    private Connection createConnection() throws Exception {
+        ConnectionFactory factory = new ConnectionFactory();
+        factory.setHost(HOST);
+        factory.setPort(PORT);
+        factory.setUsername(USERNAME);
+        factory.setPassword(PASSWORD);
+        factory.setVirtualHost(VIRTUAL_HOST);
+        return factory.newConnection();
     }
 }

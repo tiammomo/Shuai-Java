@@ -2,8 +2,19 @@ package com.shuai.kafka.consumer;
 
 import com.shuai.common.interfaces.MqConsumer;
 import com.shuai.model.Message;
+import org.apache.kafka.clients.consumer.ConsumerConfig;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.common.serialization.StringDeserializer;
+
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Properties;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * Kafka 消费者实现
@@ -23,67 +34,71 @@ public class KafkaConsumerImpl implements MqConsumer {
     private String groupId;
     private String autoOffsetReset = "earliest";
     private boolean enableAutoCommit = true;
+    private int maxPollRecords = 100;
     private Set<String> subscribedTopics = new HashSet<>();
+    private volatile boolean started = false;
+    private KafkaConsumer<String, String> consumer;
 
     @Override
     public void subscribe(String topic) {
         this.subscribedTopics.add(topic);
-        /*
-         * [Kafka Consumer] 订阅主题
-         *   consumer.subscribe(Collections.singletonList(topic));
-         */
+        if (consumer != null) {
+            consumer.subscribe(Arrays.asList(topic));
+        }
     }
 
     @Override
     public void subscribe(String topic, String tags) {
+        // Kafka 不支持按标签过滤，通过消费时过滤实现
         this.subscribedTopics.add(topic);
-        /*
-         * [Kafka Consumer] 订阅主题（带标签过滤仅 RocketMQ 支持）
-         *   Kafka 不支持按标签过滤，需要在消费时过滤
-         */
+        if (consumer != null) {
+            consumer.subscribe(Arrays.asList(topic));
+        }
     }
 
     @Override
     public Message poll(long timeoutMs) {
-        /*
-         * [Kafka Consumer] 拉取消息
-         *   ConsumerRecords<String, String> records =
-         *       consumer.poll(Duration.ofMillis(timeoutMs));
-         *   if (!records.isEmpty()) {
-         *       ConsumerRecord<String, String> record = records.iterator().next();
-         *       return Message.builder()
-         *           .topic(record.topic())
-         *           .key(record.key())
-         *           .body(record.value())
-         *           .build();
-         *   }
-         */
+        if (consumer == null || !started) {
+            return null;
+        }
+
+        ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(timeoutMs));
+        if (!records.isEmpty()) {
+            org.apache.kafka.clients.consumer.ConsumerRecord<String, String> record =
+                records.iterator().next();
+            return Message.builder()
+                .topic(record.topic())
+                .key(record.key())
+                .body(record.value())
+                .build();
+        }
         return null;
     }
 
     @Override
     public Message[] pollBatch(long timeoutMs, int maxCount) {
-        /*
-         * [Kafka Consumer] 批量拉取消息
-         *   ConsumerRecords<String, String> records =
-         *       consumer.poll(Duration.ofMillis(timeoutMs));
-         *   return records.stream()
-         *       .map(r -> Message.builder()
-         *           .topic(r.topic())
-         *           .key(r.key())
-         *           .body(r.value())
-         *           .build())
-         *       .toArray(Message[]::new);
-         */
-        return new Message[0];
+        if (consumer == null || !started) {
+            return new Message[0];
+        }
+
+        ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(timeoutMs));
+        List<Message> messages = new ArrayList<>();
+        for (org.apache.kafka.clients.consumer.ConsumerRecord<String, String> r : records) {
+            if (messages.size() >= maxCount) break;
+            messages.add(Message.builder()
+                .topic(r.topic())
+                .key(r.key())
+                .body(r.value())
+                .build());
+        }
+        return messages.toArray(new Message[0]);
     }
 
     @Override
     public void commit(Message message) {
-        /*
-         * [Kafka Consumer] 提交 offset
-         *   consumer.commitSync();
-         */
+        if (consumer != null && enableAutoCommit) {
+            consumer.commitSync();
+        }
     }
 
     public void setBootstrapServers(String servers) {
@@ -102,26 +117,48 @@ public class KafkaConsumerImpl implements MqConsumer {
         this.enableAutoCommit = enableAutoCommit;
     }
 
+    public void setMaxPollRecords(int maxPollRecords) {
+        this.maxPollRecords = maxPollRecords;
+    }
+
+    public boolean isStarted() {
+        return started;
+    }
+
+    public String getGroupId() {
+        return groupId;
+    }
+
+    public void commitSync() {
+        if (consumer != null) {
+            consumer.commitSync();
+        }
+    }
+
     @Override
     public void start() {
-        /*
-         * [Kafka Consumer] 启动
-         *   Properties props = new Properties();
-         *   props.put("bootstrap.servers", bootstrapServers);
-         *   props.put("group.id", groupId);
-         *   props.put("auto.offset.reset", autoOffsetReset);
-         *   props.put("enable.auto.commit", enableAutoCommit);
-         *   props.put("key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
-         *   props.put("value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer");
-         *   KafkaConsumer<String, String> consumer = new KafkaConsumer<>(props);
-         */
+        Properties props = new Properties();
+        props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, groupId);
+        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, autoOffsetReset);
+        props.put(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, enableAutoCommit);
+        props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, maxPollRecords);
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
+
+        this.consumer = new KafkaConsumer<>(props);
+        if (!subscribedTopics.isEmpty()) {
+            consumer.subscribe(new ArrayList<>(subscribedTopics));
+        }
+        this.started = true;
     }
 
     @Override
     public void shutdown() {
-        /*
-         * [Kafka Consumer] 关闭
-         *   consumer.close();
-         */
+        if (consumer != null) {
+            consumer.close();
+            consumer = null;
+        }
+        this.started = false;
     }
 }

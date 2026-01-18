@@ -3,6 +3,14 @@ package com.shuai.rabbitmq.producer;
 import com.shuai.common.interfaces.MqProducer;
 import com.shuai.model.Message;
 import com.shuai.model.MessageResult;
+import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.TimeoutException;
 
 /**
  * RabbitMQ 生产者实现
@@ -22,39 +30,75 @@ public class RabbitMqProducerImpl implements MqProducer {
     private String username = "guest";
     private String password = "guest";
     private String virtualHost = "/";
+    private String exchange = "";
+    private boolean mandatory = false;
+    private Connection connection;
+    private Channel channel;
 
     @Override
     public MessageResult send(Message message) {
-        /*
-         * [RabbitMQ Producer] 发送消息
-         *   channel.basicPublish(
-         *       exchange,
-         *       message.getTag(),
-         *       null,
-         *       message.getBody().getBytes()
-         *   );
-         */
-        return MessageResult.success(message.getMessageId(), message.getTopic(), 0, 0);
+        if (channel == null) {
+            return MessageResult.fail(message.getMessageId(), "Channel not initialized");
+        }
+
+        try {
+            String routingKey = message.getTag() != null ? message.getTag() : message.getTopic();
+            channel.basicPublish(
+                exchange,
+                routingKey,
+                mandatory,
+                null,
+                message.getBody().getBytes(StandardCharsets.UTF_8)
+            );
+            return MessageResult.success(message.getMessageId(), message.getTopic(), 0, 0);
+        } catch (IOException e) {
+            return MessageResult.fail(message.getMessageId(), e.getMessage());
+        }
     }
 
     @Override
     public void sendAsync(Message message, SendCallback callback) {
-        /*
-         * [RabbitMQ Producer] 异步发送需要通过 publisher confirms 实现
-         *   channel.confirmSelect();
-         *   channel.addConfirmListener(...);
-         */
-        if (callback != null) {
-            callback.onSuccess(MessageResult.success(message.getMessageId(), message.getTopic(), 0, 0));
+        if (channel == null) {
+            if (callback != null) {
+                callback.onFailure(MessageResult.fail(message.getMessageId(), "Channel not initialized"));
+            }
+            return;
+        }
+
+        try {
+            String routingKey = message.getTag() != null ? message.getTag() : message.getTopic();
+            channel.basicPublish(
+                exchange,
+                routingKey,
+                mandatory,
+                null,
+                message.getBody().getBytes(StandardCharsets.UTF_8)
+            );
+            if (callback != null) {
+                callback.onSuccess(MessageResult.success(message.getMessageId(), message.getTopic(), 0, 0));
+            }
+        } catch (IOException e) {
+            if (callback != null) {
+                callback.onFailure(MessageResult.fail(message.getMessageId(), e.getMessage()));
+            }
         }
     }
 
     @Override
     public void sendOneWay(Message message) {
-        /*
-         * [RabbitMQ Producer] 单向发送
-         *   channel.basicPublish(exchange, routingKey, null, body);
-         */
+        if (channel != null) {
+            try {
+                String routingKey = message.getTag() != null ? message.getTag() : message.getTopic();
+                channel.basicPublish(
+                    exchange,
+                    routingKey,
+                    mandatory,
+                    null,
+                    message.getBody().getBytes(StandardCharsets.UTF_8)
+                );
+            } catch (IOException ignored) {
+            }
+        }
     }
 
     public void setHost(String host) {
@@ -77,27 +121,42 @@ public class RabbitMqProducerImpl implements MqProducer {
         this.virtualHost = virtualHost;
     }
 
+    public void setExchange(String exchange) {
+        this.exchange = exchange;
+    }
+
+    public void setMandatory(boolean mandatory) {
+        this.mandatory = mandatory;
+    }
+
     @Override
     public void start() {
-        /*
-         * [RabbitMQ Producer] 启动
-         *   ConnectionFactory factory = new ConnectionFactory();
-         *   factory.setHost(host);
-         *   factory.setPort(port);
-         *   factory.setUsername(username);
-         *   factory.setPassword(password);
-         *   factory.setVirtualHost(virtualHost);
-         *   Connection connection = factory.newConnection();
-         *   Channel channel = connection.createChannel();
-         */
+        try {
+            ConnectionFactory factory = new ConnectionFactory();
+            factory.setHost(host);
+            factory.setPort(port);
+            factory.setUsername(username);
+            factory.setPassword(password);
+            factory.setVirtualHost(virtualHost);
+            this.connection = factory.newConnection();
+            this.channel = connection.createChannel();
+        } catch (IOException | TimeoutException e) {
+            throw new RuntimeException("Failed to start RabbitMQ producer: " + e.getMessage(), e);
+        }
     }
 
     @Override
     public void shutdown() {
-        /*
-         * [RabbitMQ Producer] 关闭
-         *   channel.close();
-         *   connection.close();
-         */
+        try {
+            if (channel != null && channel.isOpen()) {
+                channel.close();
+                channel = null;
+            }
+            if (connection != null && connection.isOpen()) {
+                connection.close();
+                connection = null;
+            }
+        } catch (IOException | TimeoutException ignored) {
+        }
     }
 }

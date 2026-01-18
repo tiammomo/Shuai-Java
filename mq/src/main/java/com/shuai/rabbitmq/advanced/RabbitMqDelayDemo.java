@@ -1,13 +1,40 @@
 package com.shuai.rabbitmq.advanced;
 
+import com.rabbitmq.client.BuiltinExchangeType;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
+
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * RabbitMQ 延迟队列演示
  *
- * 代码位置: [RabbitMqDelayDemo.java](src/main/java/com/shuai/rabbitmq/advanced/RabbitMqDelayDemo.java)
+ * 【运行方式】
+ *   1. 确保 Docker RabbitMQ 服务运行: docker-compose up -d
+ *   2. 运行主方法
  *
  * @author Shuai
  */
 public class RabbitMqDelayDemo {
+
+    private static final String HOST = "localhost";
+    private static final int PORT = 5672;
+    private static final String USERNAME = "guest";
+    private static final String PASSWORD = "guest";
+
+    public static void main(String[] args) {
+        RabbitMqDelayDemo demo = new RabbitMqDelayDemo();
+        try {
+            demo.delayWithTTL();
+            demo.orderTimeoutCancel();
+            System.out.println("RabbitMQ 延迟队列演示完成");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     /**
      * TTL + 死信队列实现延迟队列
@@ -18,70 +45,45 @@ public class RabbitMqDelayDemo {
      *   3. 过期消息进入死信交换机
      *   4. 死信交换机路由到延迟死信队列
      *   5. 消费者从延迟死信队列消费
-     *
-     * 【代码示例】
-     *   // 延迟队列配置
-     *   Map<String, Object> args = new HashMap<>();
-     *   args.put("x-dead-letter-exchange", "delay-dlx");
-     *   args.put("x-dead-letter-routing-key", "delay-dlq");
-     *   args.put("x-message-ttl", 30000);  // 30秒
-     *   channel.queueDeclare("delay-queue", true, false, false, args);
-     *
-     *   // 死信队列
-     *   channel.queueDeclare("delay-dlq", true, false, false, null);
-     *
-     * 【使用场景】
-     *   - 订单超时取消
-     *   - 延迟任务
-     *   - 重试机制
      */
-    public void delayWithTTL() {
-        MockChannel channel = new MockChannel();
+    public void delayWithTTL() throws Exception {
+        System.out.println("\n=== TTL + 死信队列实现延迟 ===");
 
-        // 延迟队列配置
-        channel.declareDelayQueue(30000);
+        Connection connection = createConnection();
+        Channel channel = connection.createChannel();
 
-        // 死信队列
-        channel.declareDeadLetterQueue();
+        // 1. 声明死信交换机和死信队列
+        channel.exchangeDeclare("delay-dlx", BuiltinExchangeType.DIRECT, true);
+        channel.queueDeclare("delay-dlq", true, false, false, null);
+        channel.queueBind("delay-dlq", "delay-dlx", "delay-dlq");
+        System.out.println("死信队列创建成功: delay-dlx -> delay-dlq");
 
+        // 2. 声明延迟队列（配置 TTL 和死信）
+        Map<String, Object> args = new HashMap<>();
+        args.put("x-dead-letter-exchange", "delay-dlx");
+        args.put("x-dead-letter-routing-key", "delay-dlq");
+        args.put("x-message-ttl", 10000);  // 10秒延迟
+        channel.queueDeclare("delay-queue", true, false, false, args);
+        System.out.println("延迟队列创建成功: TTL=10秒");
+
+        // 3. 启动消费者
+        String consumerTag = channel.basicConsume("delay-dlq", true, (tag, delivery) -> {
+            String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
+            System.out.println("[消费者] 收到延迟消息: " + message);
+        }, tag -> {});
+        System.out.println("消费者启动，等待延迟消息...");
+
+        // 4. 发送延迟消息
+        channel.basicPublish("", "delay-queue", null,
+            "10秒后到达的消息".getBytes(StandardCharsets.UTF_8));
+        System.out.println("延迟消息已发送，10秒后将被消费");
+
+        // 等待消息消费
+        Thread.sleep(15000);
+
+        channel.basicCancel(consumerTag);
         channel.close();
-    }
-
-    /**
-     * 延迟消息插件
-     *
-     * 【说明】
-     *   使用 rabbitmq_delayed_message_exchange 插件
-     *
-     * 【安装插件】
-     *   rabbitmq-plugins enable rabbitmq_delayed_message_exchange
-     *
-     * 【代码示例】
-     *   Map<String, Object> args = new HashMap<>();
-     *   args.put("x-delayed-type", "direct");
-     *   channel.exchangeDeclare("delayed-exchange", "x-delayed-message", true, false, args);
-     *
-     *   // 发送延迟消息
-     *   AMQP.BasicProperties props = new AMQP.BasicProperties.Builder()
-     *       .headers(Map.of("x-delay", 30000))  // 30秒
-     *       .build();
-     *   channel.basicPublish("delayed-exchange", "key", props, body);
-     *
-     * 【优点】
-     *   - 精确延迟
-     *   - 性能更好
-     *   - 不需要死信队列
-     */
-    public void delayPlugin() {
-        MockChannel channel = new MockChannel();
-
-        // 声明延迟交换机
-        channel.declareDelayedExchange();
-
-        // 发送延迟消息
-        channel.sendWithDelay(30000);
-
-        channel.close();
+        connection.close();
     }
 
     /**
@@ -92,81 +94,55 @@ public class RabbitMqDelayDemo {
      *   2. 30分钟后消息进入死信队列
      *   3. 消费者检查订单状态
      *   4. 未支付则取消订单
-     *
-     * 【代码示例】
-     *   // 下单时发送消息到延迟队列
-     *   channel.basicPublish("", "delay-queue", props, orderId.getBytes());
-     *
-     *   // 延迟队列消费
-     *   channel.basicConsume("delay-dlq", false, (tag, body) -> {
-     *       String orderId = new String(body);
-     *       Order order = orderService.getOrder(orderId);
-     *       if (!order.isPaid()) {
-     *           orderService.cancel(orderId);
-     *       }
-     *       channel.basicAck(deliveryTag, false);
-     *   });
      */
-    public void orderTimeoutCancel() {
-        MockChannel channel = new MockChannel();
+    public void orderTimeoutCancel() throws Exception {
+        System.out.println("\n=== 订单超时取消演示 ===");
 
-        // 发送订单超时消息
-        channel.basicPublish("", "order-timeout-queue", "order-001");
+        Connection connection = createConnection();
+        Channel channel = connection.createChannel();
 
-        // 从死信队列消费
-        channel.basicConsume("order-timeout-dlq", false, (tag, body) -> {});
+        // 1. 声明死信交换机和死信队列
+        channel.exchangeDeclare("order-dlx", BuiltinExchangeType.DIRECT, true);
+        channel.queueDeclare("order-timeout-dlq", true, false, false, null);
+        channel.queueBind("order-timeout-dlq", "order-dlx", "order-dlq");
 
+        // 2. 声明订单超时队列（30分钟延迟）
+        Map<String, Object> args = new HashMap<>();
+        args.put("x-dead-letter-exchange", "order-dlx");
+        args.put("x-dead-letter-routing-key", "order-dlq");
+        args.put("x-message-ttl", 1800000);  // 30分钟 = 1800000ms
+        channel.queueDeclare("order-timeout-queue", true, false, false, args);
+
+        // 3. 启动消费者
+        String orderId = "ORD-20240119-001";
+        System.out.println("订单消费者启动，等待30分钟后检查订单: " + orderId);
+
+        String consumerTag = channel.basicConsume("order-timeout-dlq", true, (tag, delivery) -> {
+            String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
+            System.out.println("[超时检查] 收到消息: " + message);
+            // 检查订单状态，如果未支付则取消
+            System.out.println("检查订单状态: " + orderId + " -> 已取消（超时未支付）");
+        }, tag -> {});
+
+        // 4. 下单时发送延迟消息
+        channel.basicPublish("", "order-timeout-queue", null,
+            ("订单超时检查: " + orderId).getBytes(StandardCharsets.UTF_8));
+        System.out.println("订单创建成功，超时消息已发送，30分钟后将检查订单状态");
+
+        // 等待测试（实际使用时消费者会持续运行）
+        Thread.sleep(5000);
+
+        channel.basicCancel(consumerTag);
         channel.close();
+        connection.close();
     }
 
-    // ========== 模拟类 ==========
-
-    static class MockChannel {
-
-        public void declareDelayQueue(int ttlMs) {
-            /*
-             * [RabbitMQ] 延迟队列
-             *   Map<String, Object> args = new HashMap<>();
-             *   args.put("x-dead-letter-exchange", "delay-dlx");
-             *   args.put("x-dead-letter-routing-key", "delay-dlq");
-             *   args.put("x-message-ttl", ttlMs);
-             *   channel.queueDeclare("delay-queue", true, false, false, args);
-             */
-        }
-
-        public void declareDeadLetterQueue() {
-            /*
-             * [RabbitMQ] 死信队列
-             *   channel.queueDeclare("delay-dlq", true, false, false, null);
-             */
-        }
-
-        public void declareDelayedExchange() {
-            /*
-             * [RabbitMQ] 延迟交换机
-             *   Map<String, Object> args = new HashMap<>();
-             *   args.put("x-delayed-type", "direct");
-             *   channel.exchangeDeclare("delayed-exchange", "x-delayed-message", true, false, args);
-             */
-        }
-
-        public void sendWithDelay(int delayMs) {
-            /*
-             * [RabbitMQ] 发送延迟消息
-             *   AMQP.BasicProperties props = new AMQP.BasicProperties.Builder()
-             *       .headers(Map.of("x-delay", delayMs))
-             *       .build();
-             *   channel.basicPublish("delayed-exchange", "key", props, body);
-             */
-        }
-
-        public void basicPublish(String exchange, String routingKey, String body) {
-        }
-
-        public void basicConsume(String queue, boolean autoAck, java.util.function.BiConsumer<String, String> callback) {
-        }
-
-        public void close() {
-        }
+    private Connection createConnection() throws Exception {
+        ConnectionFactory factory = new ConnectionFactory();
+        factory.setHost(HOST);
+        factory.setPort(PORT);
+        factory.setUsername(USERNAME);
+        factory.setPassword(PASSWORD);
+        return factory.newConnection();
     }
 }

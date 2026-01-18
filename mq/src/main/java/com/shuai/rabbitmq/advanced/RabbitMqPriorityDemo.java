@@ -1,94 +1,111 @@
 package com.shuai.rabbitmq.advanced;
 
+import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * RabbitMQ 优先级队列演示
  *
- * 代码位置: [RabbitMqPriorityDemo.java](src/main/java/com/shuai/rabbitmq/advanced/RabbitMqPriorityDemo.java)
+ * 【运行方式】
+ *   1. 确保 Docker RabbitMQ 服务运行: docker-compose up -d
+ *   2. 运行主方法
  *
  * @author Shuai
  */
 public class RabbitMqPriorityDemo {
 
+    private static final String HOST = "localhost";
+    private static final int PORT = 5672;
+    private static final String USERNAME = "guest";
+    private static final String PASSWORD = "guest";
+
+    public static void main(String[] args) {
+        RabbitMqPriorityDemo demo = new RabbitMqPriorityDemo();
+        try {
+            demo.priorityQueueDemo();
+            System.out.println("RabbitMQ 优先级队列演示完成");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     /**
-     * 创建优先级队列
-     *
-     * 【配置】
-     *   Map<String, Object> args = new HashMap<>();
-     *   args.put("x-max-priority", 10);  // 最大优先级 10
-     *   channel.queueDeclare("priority-queue", true, false, false, args);
+     * 优先级队列完整演示
      *
      * 【优先级范围】
      *   - 0-10 (默认 0)
      *   - 数字越大优先级越高
      *   - 建议设置 1-5，避免过多优先级
-     *
-     * 【使用场景】
-     *   - VIP 客户消息优先处理
-     *   - 紧急任务优先执行
-     *   - 故障告警优先通知
      */
-    public void createPriorityQueue() {
-        MockChannel channel = new MockChannel();
+    public void priorityQueueDemo() throws Exception {
+        System.out.println("\n=== 优先级队列演示 ===");
 
-        channel.declarePriorityQueue(10);
+        Connection connection = createConnection();
+        Channel channel = connection.createChannel();
 
+        // 1. 创建优先级队列（最大优先级 10）
+        Map<String, Object> args = new HashMap<>();
+        args.put("x-max-priority", 10);
+        channel.queueDeclare("priority-queue", true, false, false, args);
+        System.out.println("优先级队列创建成功: x-max-priority=10");
+
+        // 2. 启动消费者
+        String consumerTag = channel.basicConsume("priority-queue", true, (tag, delivery) -> {
+            String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
+            Integer priority = delivery.getProperties().getPriority();
+            System.out.println("收到消息: " + message + " [优先级: " + priority + "]");
+        }, tag -> {});
+
+        // 3. 逆序发送不同优先级消息（验证高优先级优先消费）
+        System.out.println("\n发送消息（低优先级到高优先级）...");
+
+        // 先发送低优先级
+        sendWithPriority(channel, "priority-queue", "普通消息", 1);
+        sendWithPriority(channel, "priority-queue", "重要消息", 5);
+
+        // 后发送高优先级
+        sendWithPriority(channel, "priority-queue", "紧急消息", 10);
+
+        // 等待消费
+        Thread.sleep(2000);
+
+        // 再次测试：同优先级按入队顺序
+        System.out.println("\n发送同优先级消息...");
+        for (int i = 1; i <= 3; i++) {
+            sendWithPriority(channel, "priority-queue", "同优先级消息-" + i, 3);
+        }
+
+        Thread.sleep(2000);
+
+        channel.basicCancel(consumerTag);
         channel.close();
+        connection.close();
     }
 
     /**
      * 发送优先级消息
-     *
-     * 【代码示例】
-     *   AMQP.BasicProperties props = new AMQP.BasicProperties.Builder()
-     *       .priority(5)  // 优先级 0-10
-     *       .build();
-     *   channel.basicPublish("", "priority-queue", props, message.getBytes());
-     *
-     * 【优先级消费】
-     *   - 高优先级消息优先被消费
-     *   - 同优先级按入队顺序消费
-     *   - 消费者需要支持优先级消费
-     *
-     * 【注意事项】
-     *   - 优先级只在同一队列内有效
-     *   - 消息过多时性能下降
-     *   - 需要所有消费者都支持优先级
      */
-    public void sendPriorityMessage() {
-        MockChannel channel = new MockChannel();
-
-        // 发送不同优先级消息
-        channel.sendWithPriority(1, "普通消息");
-        channel.sendWithPriority(5, "重要消息");
-        channel.sendWithPriority(10, "紧急消息");
-
-        channel.close();
+    private void sendWithPriority(Channel channel, String queue, String message, int priority) throws IOException {
+        AMQP.BasicProperties props = new AMQP.BasicProperties.Builder()
+                .priority(priority)
+                .build();
+        channel.basicPublish("", queue, props, message.getBytes(StandardCharsets.UTF_8));
+        System.out.println("发送: " + message + " [优先级: " + priority + "]");
     }
 
-    // ========== 模拟类 ==========
-
-    static class MockChannel {
-
-        public void declarePriorityQueue(int maxPriority) {
-            /*
-             * [RabbitMQ] 声明优先级队列
-             *   Map<String, Object> args = new HashMap<>();
-             *   args.put("x-max-priority", maxPriority);
-             *   channel.queueDeclare("priority-queue", true, false, false, args);
-             */
-        }
-
-        public void sendWithPriority(int priority, String body) {
-            /*
-             * [RabbitMQ] 发送优先级消息
-             *   AMQP.BasicProperties props = new AMQP.BasicProperties.Builder()
-             *       .priority(priority)
-             *       .build();
-             *   channel.basicPublish("", "priority-queue", props, body.getBytes());
-             */
-        }
-
-        public void close() {
-        }
+    private Connection createConnection() throws Exception {
+        ConnectionFactory factory = new ConnectionFactory();
+        factory.setHost(HOST);
+        factory.setPort(PORT);
+        factory.setUsername(USERNAME);
+        factory.setPassword(PASSWORD);
+        return factory.newConnection();
     }
 }

@@ -6,6 +6,7 @@ import com.shuai.rabbitmq.producer.RabbitMqProducerImpl;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * RabbitMQ 生产者测试
@@ -14,8 +15,23 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 public class RabbitMqProducerTest {
 
+    private boolean isRabbitMqAvailable() {
+        try {
+            RabbitMqProducerImpl producer = new RabbitMqProducerImpl();
+            producer.setHost("localhost");
+            producer.setPort(5672);
+            producer.start();
+            producer.shutdown();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     @Test
     void testSendSync() {
+        assumeTrue(isRabbitMqAvailable(), "RabbitMQ not available, skipping test");
+
         // 创建生产者
         RabbitMqProducerImpl producer = new RabbitMqProducerImpl();
         producer.setHost("localhost");
@@ -46,6 +62,8 @@ public class RabbitMqProducerTest {
 
     @Test
     void testSendWithPriority() {
+        assumeTrue(isRabbitMqAvailable(), "RabbitMQ not available, skipping test");
+
         RabbitMqProducerImpl producer = new RabbitMqProducerImpl();
         producer.setHost("localhost");
         producer.start();
@@ -66,6 +84,8 @@ public class RabbitMqProducerTest {
 
     @Test
     void testSendAsync() {
+        assumeTrue(isRabbitMqAvailable(), "RabbitMQ not available, skipping test");
+
         RabbitMqProducerImpl producer = new RabbitMqProducerImpl();
         producer.setHost("localhost");
         producer.start();
@@ -95,6 +115,8 @@ public class RabbitMqProducerTest {
 
     @Test
     void testDeclareExchange() {
+        assumeTrue(isRabbitMqAvailable(), "RabbitMQ not available, skipping test");
+
         RabbitMqProducerImpl producer = new RabbitMqProducerImpl();
         producer.setHost("localhost");
         producer.start();
@@ -107,6 +129,8 @@ public class RabbitMqProducerTest {
 
     @Test
     void testDeclareQueue() {
+        assumeTrue(isRabbitMqAvailable(), "RabbitMQ not available, skipping test");
+
         RabbitMqProducerImpl producer = new RabbitMqProducerImpl();
         producer.setHost("localhost");
         producer.start();

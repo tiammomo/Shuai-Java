@@ -2,6 +2,16 @@ package com.shuai.rabbitmq.consumer;
 
 import com.shuai.common.interfaces.MqConsumer;
 import com.shuai.model.Message;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
+import com.rabbitmq.client.GetResponse;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.TimeoutException;
 
 /**
  * RabbitMQ 消费者实现
@@ -23,65 +33,70 @@ public class RabbitMqConsumerImpl implements MqConsumer {
     private String virtualHost = "/";
     private String queue;
     private boolean autoAck = false;
+    private Connection connection;
+    private Channel channel;
+    private volatile boolean started = false;
 
     @Override
     public void subscribe(String topic) {
         this.queue = topic;
-        /*
-         * [RabbitMQ Consumer] 订阅队列
-         *   channel.basicConsume(queue, autoAck, deliverCallback, cancelCallback);
-         */
     }
 
     @Override
     public void subscribe(String topic, String tags) {
-        // RabbitMQ 使用 queue 不是 topic，tags 通过 binding 实现
         this.queue = topic;
-        /*
-         * [RabbitMQ Consumer] 标签过滤通过 Binding 实现
-         *   channel.queueBind(queue, exchange, tags);
-         */
     }
 
     @Override
     public Message poll(long timeoutMs) {
-        /*
-         * [RabbitMQ Consumer] 拉取消息
-         *   GetResponse response = channel.basicGet(queue, autoAck);
-         *   if (response != null) {
-         *       return Message.builder()
-         *           .topic(queue)
-         *           .body(new String(response.getBody()))
-         *           .build();
-         *   }
-         */
+        if (channel == null || !started) {
+            return null;
+        }
+
+        try {
+            GetResponse response = channel.basicGet(queue, autoAck);
+            if (response != null) {
+                return convertGetResponse(response);
+            }
+        } catch (IOException e) {
+            // 忽略错误
+        }
+
         return null;
     }
 
     @Override
     public Message[] pollBatch(long timeoutMs, int maxCount) {
-        /*
-         * [RabbitMQ Consumer] 批量拉取
-         *   List<Message> messages = new ArrayList<>();
-         *   for (int i = 0; i < maxCount; i++) {
-         *       GetResponse response = channel.basicGet(queue, autoAck);
-         *       if (response == null) break;
-         *       messages.add(Message.builder()
-         *           .topic(queue)
-         *           .body(new String(response.getBody()))
-         *           .build());
-         *   }
-         *   return messages.toArray(new Message[0]);
-         */
-        return new Message[0];
+        if (channel == null || !started) {
+            return new Message[0];
+        }
+
+        List<Message> messages = new ArrayList<>();
+        try {
+            while (messages.size() < maxCount) {
+                GetResponse response = channel.basicGet(queue, autoAck);
+                if (response == null) {
+                    break;
+                }
+                messages.add(convertGetResponse(response));
+            }
+        } catch (IOException e) {
+            // 忽略错误
+        }
+
+        return messages.toArray(new Message[0]);
     }
 
     @Override
     public void commit(Message message) {
-        /*
-         * [RabbitMQ Consumer] 确认消息
-         *   channel.basicAck(deliveryTag, false);
-         */
+        // RabbitMQ 通过 ack 确认消息
+    }
+
+    private Message convertGetResponse(GetResponse response) {
+        return Message.builder()
+            .topic(queue)
+            .body(new String(response.getBody(), StandardCharsets.UTF_8))
+            .build();
     }
 
     public void setHost(String host) {
@@ -114,25 +129,36 @@ public class RabbitMqConsumerImpl implements MqConsumer {
 
     @Override
     public void start() {
-        /*
-         * [RabbitMQ Consumer] 启动
-         *   ConnectionFactory factory = new ConnectionFactory();
-         *   factory.setHost(host);
-         *   factory.setPort(port);
-         *   factory.setUsername(username);
-         *   factory.setPassword(password);
-         *   Connection connection = factory.newConnection();
-         *   Channel channel = connection.createChannel();
-         *   channel.basicConsume(queue, autoAck, deliverCallback, cancelCallback);
-         */
+        try {
+            ConnectionFactory factory = new ConnectionFactory();
+            factory.setHost(host);
+            factory.setPort(port);
+            factory.setUsername(username);
+            factory.setPassword(password);
+            factory.setVirtualHost(virtualHost);
+
+            this.connection = factory.newConnection();
+            this.channel = connection.createChannel();
+            channel.basicQos(1);
+            this.started = true;
+        } catch (IOException | TimeoutException e) {
+            throw new RuntimeException("Failed to start RabbitMQ consumer: " + e.getMessage(), e);
+        }
     }
 
     @Override
     public void shutdown() {
-        /*
-         * [RabbitMQ Consumer] 关闭
-         *   channel.close();
-         *   connection.close();
-         */
+        try {
+            if (channel != null && channel.isOpen()) {
+                channel.close();
+                channel = null;
+            }
+            if (connection != null && connection.isOpen()) {
+                connection.close();
+                connection = null;
+            }
+        } catch (IOException | TimeoutException ignored) {
+        }
+        this.started = false;
     }
 }

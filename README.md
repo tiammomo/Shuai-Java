@@ -4,18 +4,24 @@
 
 ## 核心模块
 
-| 模块 | 路径 | 描述 |
-|-----|------|------|
-| **basics** | [basics/](basics/) | Java 基础语法模块，基于 JDK 21 的系统性学习 |
-| **mq** | [mq/](mq/) | 消息队列模块，涵盖 Kafka、RocketMQ、RabbitMQ |
-| **elasticsearch** | [elasticsearch/](elasticsearch/) | 搜索引擎模块，涵盖全文检索、向量检索、RAG、LLM 集成 |
+| 模块 | 路径 | 描述 | 学习文档 |
+|-----|------|------|----------|
+| **basics** | [basics/](basics/) | Java 基础语法模块，基于 JDK 21 的系统性学习 | [学习文档](basics/learn_docs/README.md) |
+| **mq** | [mq/](mq/) | 消息队列模块，涵盖 Kafka、RocketMQ、RabbitMQ | - |
+| **elasticsearch** | [elasticsearch/](elasticsearch/) | 搜索引擎模块，涵盖全文检索、向量检索、RAG、LLM 集成 | [学习文档](elasticsearch/learn_docs/README.md) |
 
 ## 扩展模块
 
-| 模块 | 路径 | 描述 |
-|-----|------|------|
-| **database** | [database/](database/) | 数据库模块，整合 MySQL、PostgreSQL |
-| **api-docs** | [api-docs/](api-docs/) | API 文档模块，整合 Swagger、Knife4j |
+| 模块 | 路径 | 描述 | 学习文档 |
+|-----|------|------|----------|
+| **orm** | [orm/](orm/) | ORM 框架模块，整合 Spring + MyBatis | - |
+| **microservice** | [microservice/](microservice/) | 微服务模块，整合 Nacos + Dubbo | - |
+| **database** | [database/](database/) | 数据库模块，整合 MySQL、PostgreSQL、MongoDB、Redis | - |
+| **security** | [security/](security/) | 安全模块，整合 Spring Security + OAuth2 | - |
+| **protocol** | [protocol/](protocol/) | 通信协议模块，整合 WebSocket + Scheduler | - |
+| **observability** | [observability/](observability/) | 可观测性模块，整合 Prometheus + Sentinel | - |
+| **caffeine** | [caffeine/](caffeine/) | 高性能本地缓存，Java 界最优缓存实现 | - |
+| **api-docs** | [api-docs/](api-docs/) | API 文档模块，整合 Swagger、Knife4j | - |
 
 ## 快速开始
 
@@ -51,6 +57,8 @@ mvn -pl mq exec:java -Dexec.mainClass=com.shuai.MqDemo
 
 项目配套学习文档位于 [learn_docs](learn_docs/) 目录：
 
+### 通用文档
+
 | 文档 | 描述 |
 |-----|------|
 | [学习路线图](learn_docs/学习路线图.md) | 完整的学习路径规划 |
@@ -58,6 +66,52 @@ mvn -pl mq exec:java -Dexec.mainClass=com.shuai.MqDemo
 | [项目结构说明](learn_docs/项目结构说明.md) | 项目目录结构和规范 |
 | [代码规范](learn_docs/代码规范.md) | Java 编码规范和最佳实践 |
 | [JDK21新特性](learn_docs/JDK21新特性.md) | JDK 21 新特性详解 |
+
+### Java 基础知识文档
+
+> 基于 [basics/learn_docs/](basics/learn_docs/) 的系统性学习内容
+
+| 章节 | 主题 | 说明 |
+|------|------|------|
+| 00 | [概述与快速开始](basics/learn_docs/00-overview/README.md) | 模块介绍、学习路线 |
+| 01 | [Java 基础](basics/learn_docs/01-basics/README.md) | 数据类型、运算符、字符串、流程控制 |
+| 02 | [面向对象进阶](basics/learn_docs/02-oop/README.md) | 继承、多态、抽象类、接口 |
+| 03 | [核心特性](basics/learn_docs/03-core/README.md) | 异常、泛型、反射、SPI |
+| 04 | [集合框架](basics/learn_docs/04-collections/README.md) | List、Set、Map、Queue |
+| 05 | [IO 流](basics/learn_docs/05-io/README.md) | 字节流、字符流、NIO |
+| 06 | [多线程](basics/learn_docs/06-threading/README.md) | 线程基础、同步、线程池 |
+| 07 | [JVM 原理](basics/learn_docs/07-jvm/README.md) | 内存结构、垃圾回收 |
+| 08 | [网络编程](basics/learn_docs/08-network/README.md) | TCP、UDP 编程 |
+| 09 | [Netty](basics/learn_docs/09-netty/README.md) | Netty 入门、ByteBuf |
+| 10 | [JSON 处理](basics/learn_docs/10-json/README.md) | Jackson、Gson |
+| 11 | [现代 Java](basics/learn_docs/11-modern/README.md) | Lambda、Stream、Optional |
+| 12 | [高级特性](basics/learn_docs/12-advanced/README.md) | BigDecimal、日期时间 |
+| 13 | [工具库](basics/learn_docs/13-tools/README.md) | Guava、日志、测试框架 |
+| 14 | [数据库](basics/learn_docs/14-database/README.md) | JDBC、事务管理 |
+| 15 | [设计模式](basics/learn_docs/15-patterns/README.md) | 创建型、结构型、行为型 |
+| 16 | [注解](basics/learn_docs/16-annotations/README.md) | 自定义注解、注解处理器 |
+
+### Elasticsearch 文档
+
+> 基于 [elasticsearch/learn_docs/](elasticsearch/learn_docs/) 的搜索引擎学习内容
+
+| 阶段 | 主题 | 说明 |
+|------|------|------|
+| 第一阶段 | [Elasticsearch 基础](elasticsearch/learn_docs/README.md#第一阶段elasticsearch-基础-已完成) | 概述、核心概念、文档操作、查询类型 |
+| 第二阶段 | [Elasticsearch 进阶](elasticsearch/learn_docs/README.md#第二阶段elasticsearch-进阶-已完成) | 嵌套查询、评分函数、聚合分析、全文检索 |
+| 第三阶段 | [高级主题](elasticsearch/learn_docs/README.md#第三阶段高级主题-已完成) | 地理查询、索引管理、Milvus 入门 |
+| 第四阶段 | [向量检索与 RAG](elasticsearch/learn_docs/README.md#第四阶段向量检索与-rag-已完成) | 向量检索、Embedding、RAG 实战 |
+
+### Caffeine 缓存文档
+
+> 基于 [caffeine/](caffeine/) 的本地缓存学习内容
+
+| 主题 | 说明 |
+|------|------|
+| [概述与快速开始](caffeine/src/main/java/com/shuai/caffeine/demo/overview/CaffeineOverviewDemo.java) | Caffeine 介绍、特性、优势 |
+| [基本使用](caffeine/src/main/java/com/shuai/caffeine/demo/basic/BasicUsageDemo.java) | Cache/LoadingCache/AsyncCache |
+| [淘汰策略](caffeine/src/main/java/com/shuai/caffeine/demo/eviction/EvictionDemo.java) | 基于大小/时间/权重/引用 |
+| [统计监控](caffeine/src/main/java/com/shuai/caffeine/demo/stats/StatsDemo.java) | 命中率统计、监控指标 |
 
 ## 参考资料
 

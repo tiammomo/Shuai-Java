@@ -3,8 +3,15 @@ package com.shuai.kafka.producer;
 import com.shuai.common.interfaces.MqProducer;
 import com.shuai.model.Message;
 import com.shuai.model.MessageResult;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.serialization.StringSerializer;
 
 import java.util.Properties;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 /**
  * Kafka 生产者实现
@@ -22,83 +29,121 @@ public class KafkaProducerImpl implements MqProducer {
     private String bootstrapServers;
     private String acks = "all";
     private int retries = 3;
-    private Properties properties;
-
-    public KafkaProducerImpl() {
-        this.properties = new Properties();
-    }
-
-    public void setBootstrapServers(String servers) {
-        this.bootstrapServers = servers;
-        this.properties.put("bootstrap.servers", servers);
-    }
-
-    public void setAcks(String acks) {
-        this.acks = acks;
-        this.properties.put("acks", acks);
-    }
-
-    public void setRetries(int retries) {
-        this.retries = retries;
-        this.properties.put("retries", retries);
-    }
+    private int batchSize = 16384;
+    private int lingerMs = 1;
+    private KafkaProducer<String, String> producer;
 
     @Override
     public MessageResult send(Message message) {
-        /*
-         * [Kafka Producer] 同步发送
-         *   ProducerRecord<String, String> record = new ProducerRecord<>(
-         *       message.getTopic(),
-         *       message.getKey(),
-         *       message.getBody()
-         *   );
-         *   RecordMetadata metadata = producer.send(record).get();
-         *   return MessageResult.success(message.getMessageId(), message.getTopic(),
-         *       metadata.partition(), metadata.offset());
-         */
-        return MessageResult.success(message.getMessageId(), message.getTopic(), 0, 0);
-    }
+        if (producer == null) {
+            return MessageResult.fail(message.getMessageId(), "Producer not started");
+        }
 
-    @Override
-    public void sendAsync(Message message, SendCallback callback) {
-        /*
-         * [Kafka Producer] 异步发送
-         *   producer.send(record, (metadata, exception) -> {
-         *       if (exception != null) {
-         *           callback.onFailure(new MessageResult(message.getMessageId(), exception.getMessage()));
-         *       } else {
-         *           callback.onSuccess(MessageResult.success(...));
-         *       }
-         *   });
-         */
-        if (callback != null) {
-            callback.onSuccess(MessageResult.success(message.getMessageId(), message.getTopic(), 0, 0));
+        try {
+            ProducerRecord<String, String> record = new ProducerRecord<>(
+                message.getTopic(),
+                message.getKey(),
+                message.getBody()
+            );
+            Future<RecordMetadata> future = producer.send(record);
+            RecordMetadata metadata = future.get();
+            return MessageResult.success(
+                message.getMessageId(),
+                message.getTopic(),
+                metadata.partition(),
+                metadata.offset()
+            );
+        } catch (InterruptedException | ExecutionException e) {
+            Thread.currentThread().interrupt();
+            return MessageResult.fail(message.getMessageId(), e.getMessage());
         }
     }
 
     @Override
+    public void sendAsync(Message message, SendCallback callback) {
+        if (producer == null) {
+            if (callback != null) {
+                callback.onFailure(MessageResult.fail(message.getMessageId(), "Producer not started"));
+            }
+            return;
+        }
+
+        ProducerRecord<String, String> record = new ProducerRecord<>(
+            message.getTopic(),
+            message.getKey(),
+            message.getBody()
+        );
+
+        producer.send(record, (metadata, exception) -> {
+            if (exception != null) {
+                if (callback != null) {
+                    callback.onFailure(MessageResult.fail(message.getMessageId(), exception.getMessage()));
+                }
+            } else {
+                if (callback != null) {
+                    callback.onSuccess(MessageResult.success(
+                        message.getMessageId(),
+                        message.getTopic(),
+                        metadata.partition(),
+                        metadata.offset()
+                    ));
+                }
+            }
+        });
+    }
+
+    @Override
     public void sendOneWay(Message message) {
-        /*
-         * [Kafka Producer] 单向发送
-         *   producer.send(record);
-         */
+        if (producer != null) {
+            ProducerRecord<String, String> record = new ProducerRecord<>(
+                message.getTopic(),
+                message.getKey(),
+                message.getBody()
+            );
+            producer.send(record);
+        }
+    }
+
+    public void setBootstrapServers(String servers) {
+        this.bootstrapServers = servers;
+    }
+
+    public void setAcks(String acks) {
+        this.acks = acks;
+    }
+
+    public void setRetries(int retries) {
+        this.retries = retries;
+    }
+
+    public void setBatchSize(int batchSize) {
+        this.batchSize = batchSize;
+    }
+
+    public void setLingerMs(int lingerMs) {
+        this.lingerMs = lingerMs;
     }
 
     @Override
     public void start() {
-        /*
-         * [Kafka Producer] 启动
-         *   properties.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-         *   properties.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
-         *   KafkaProducer<String, String> producer = new KafkaProducer<>(properties);
-         */
+        Properties props = new Properties();
+        props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
+        props.put(ProducerConfig.ACKS_CONFIG, acks);
+        props.put(ProducerConfig.RETRIES_CONFIG, retries);
+        props.put(ProducerConfig.BATCH_SIZE_CONFIG, batchSize);
+        props.put(ProducerConfig.LINGER_MS_CONFIG, lingerMs);
+        props.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "true".equals(acks));
+
+        this.producer = new KafkaProducer<>(props);
     }
 
     @Override
     public void shutdown() {
-        /*
-         * [Kafka Producer] 关闭
-         *   producer.close();
-         */
+        if (producer != null) {
+            producer.close();
+            producer = null;
+        }
     }
 }

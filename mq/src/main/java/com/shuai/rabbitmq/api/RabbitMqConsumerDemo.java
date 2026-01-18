@@ -1,174 +1,160 @@
 package com.shuai.rabbitmq.api;
 
+import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.Channel;
+import com.rabbitmq.client.Connection;
+import com.rabbitmq.client.ConnectionFactory;
+import com.rabbitmq.client.DeliverCallback;
+import com.rabbitmq.client.Delivery;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * RabbitMQ 消费者 API 演示
  *
- * 包含内容：
- * - 消费者创建
- * - 推模式消费
- * - 拉模式消费
- * - 消息确认
- * - 拒绝消息
- * - QoS 设置
- * - 消费者标签
- * - 取消消费者
- *
- * 代码位置: [RabbitMqConsumerDemo.java](src/main/java/com/shuai/rabbitmq/api/RabbitMqConsumerDemo.java)
+ * 【运行方式】
+ *   1. 确保 Docker RabbitMQ 服务运行: docker-compose up -d
+ *   2. 运行主方法
  *
  * @author Shuai
  */
 public class RabbitMqConsumerDemo {
 
+    private static final String HOST = "localhost";
+    private static final int PORT = 5672;
+    private static final String USERNAME = "guest";
+    private static final String PASSWORD = "guest";
+    private static final String VIRTUAL_HOST = "/";
+
+    public static void main(String[] args) {
+        RabbitMqConsumerDemo demo = new RabbitMqConsumerDemo();
+
+        try {
+            // 创建消费者
+            demo.createConsumer();
+
+            // 推模式消费
+            demo.pushConsume();
+
+            // 拉模式消费
+            demo.pullConsume();
+
+            // QoS 设置
+            demo.qosSettings();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     /**
      * 创建消费者
-     *
-     * 【代码示例】
-     *   Connection connection = factory.newConnection();
-     *   Channel channel = connection.createChannel();
-     *   DeliverCallback deliverCallback = (consumerTag, delivery) -> {
-     *       String message = new String(delivery.getBody());
-     *       channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
-     *   };
-     *   String consumerTag = channel.basicConsume("my-queue", false, deliverCallback, consumerTag -> {});
-     *
-     * 【配置选项】
-     *   autoAck: false (手动确认，更可靠)
-     *   autoAck: true (自动确认，可能丢失消息)
      */
-    public void createConsumer() {
-        MockConnection connection = new MockConnection();
-        MockChannel channel = connection.createChannel();
+    public void createConsumer() throws Exception {
+        System.out.println("\n=== 创建消费者 ===");
 
-        channel.basicConsume("my-queue", false, (tag, body) -> {});
+        Connection connection = createConnection();
+        Channel channel = connection.createChannel();
 
+        // 确保队列存在
+        channel.queueDeclare("demo-queue", true, false, false, null);
+
+        // 创建消费者
+        DeliverCallback deliverCallback = (tag, delivery) -> {
+            String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
+            System.out.println("收到消息: " + message);
+        };
+
+        String tag = channel.basicConsume("demo-queue", true, deliverCallback,
+                cancelTag -> {
+                    System.out.println("消费者取消: " + cancelTag);
+                });
+
+        System.out.println("消费者创建成功: " + consumerTag);
+
+        // 消费一条消息
+        Thread.sleep(1000);
+
+        channel.basicCancel(consumerTag);
         channel.close();
         connection.close();
     }
 
     /**
      * 推模式消费
-     *
-     * 【说明】
-     *   SDK 负责拉取消息，自动推送给消费者
-     *
-     * 【代码示例】
-     *   DeliverCallback deliverCallback = (consumerTag, delivery) -> {
-     *       String message = new String(delivery.getBody());
-     *       // 处理消息
-     *       channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
-     *   };
-     *   CancelCallback cancelCallback = (consumerTag) -> {
-     *       // 消费者被取消时调用
-     *   };
-     *   channel.basicConsume("my-queue", false, deliverCallback, cancelCallback);
-     *
-     * 【特点】
-     *   - SDK 自动拉取消息
-     *   - 自动推送消息给消费者
-     *   - 适合简单场景
-     *   - 实时性好
      */
-    public void pushConsume() {
-        MockConnection connection = new MockConnection();
-        MockChannel channel = connection.createChannel();
+    public void pushConsume() throws Exception {
+        System.out.println("\n=== 推模式消费 ===");
 
-        channel.basicConsume("test-queue", false, (tag, body) -> {});
+        Connection connection = createConnection();
+        Channel channel = connection.createChannel();
 
+        // 确保队列存在
+        channel.queueDeclare("push-queue", true, false, false, null);
+
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicInteger counter = new AtomicInteger(0);
+
+        DeliverCallback deliverCallback = (consumerTag, delivery) -> {
+            String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
+            System.out.println("推模式收到: " + message);
+            counter.incrementAndGet();
+
+            if (counter.get() >= 3) {
+                latch.countDown();
+            }
+        };
+
+        // 手动确认
+        String pushTag = channel.basicConsume("push-queue", false, deliverCallback,
+                cancelTag -> System.out.println("消费者取消: " + cancelTag));
+
+        System.out.println("推模式消费者启动，等待消息...");
+
+        // 等待最多 5 秒
+        latch.await(5, TimeUnit.SECONDS);
+
+        channel.basicCancel(pushTag);
         channel.close();
         connection.close();
+
+        System.out.println("推模式消费完成，共收到 " + counter.get() + " 条消息");
     }
 
     /**
      * 拉模式消费
-     *
-     * 【说明】
-     *   手动拉取消息，精确控制消费时机
-     *
-     * 【代码示例】
-     *   GetResponse response = channel.basicGet("my-queue", false);
-     *   if (response != null) {
-     *       String message = new String(response.getBody());
-     *       long deliveryTag = response.getEnvelope().getDeliveryTag();
-     *       channel.basicAck(deliveryTag, false);
-     *   }
-     *
-     * 【特点】
-     *   - 手动拉取消息
-     *   - 精确控制消费时机
-     *   - 适合批量消费
-     *   - 适合定时消费
      */
-    public void pullConsume() {
-        MockConnection connection = new MockConnection();
-        MockChannel channel = connection.createChannel();
+    public void pullConsume() throws Exception {
+        System.out.println("\n=== 拉模式消费 ===");
 
-        channel.basicGet("test-queue", false);
-        channel.basicGet("test-queue", false);
+        Connection connection = createConnection();
+        Channel channel = connection.createChannel();
 
-        channel.close();
-        connection.close();
-    }
+        // 确保队列存在
+        channel.queueDeclare("pull-queue", true, false, false, null);
 
-    /**
-     * 消息确认
-     *
-     * 【手动确认】
-     *   // 单条确认
-     *   channel.basicAck(deliveryTag, false);
-     *   // 批量确认
-     *   channel.basicAck(deliveryTag, true);
-     *
-     * 【否定确认】
-     *   // 不重入队
-     *   channel.basicNack(deliveryTag, false, false);
-     *   // 重入队
-     *   channel.basicNack(deliveryTag, false, true);
-     *
-     * 【自动确认】
-     *   channel.basicConsume("queue", true, callback, ...);
-     *
-     * 【说明】
-     *   手动确认更可靠，建议重要消息使用
-     *   消息处理完成后确认，避免消息丢失
-     */
-    public void messageAck() {
-        MockConnection connection = new MockConnection();
-        MockChannel channel = connection.createChannel();
+        int count = 0;
+        // 拉取最多 5 条消息
+        while (count < 5) {
+            com.rabbitmq.client.GetResponse response = channel.basicGet("pull-queue", false);
+            if (response == null) {
+                break;
+            }
 
-        channel.basicAck(1, false);
-        channel.basicAck(100, true);
-        channel.basicNack(2, false, false);
-        channel.basicNack(3, false, true);
+            String message = new String(response.getBody(), StandardCharsets.UTF_8);
+            System.out.println("拉模式收到: " + message);
+            count++;
 
-        channel.close();
-        connection.close();
-    }
+            // 确认消息
+            channel.basicAck(response.getEnvelope().getDeliveryTag(), false);
+        }
 
-    /**
-     * 拒绝消息
-     *
-     * 【代码示例】
-     *   // 拒绝，不重入队（进入死信队列）
-     *   channel.basicReject(deliveryTag, false);
-     *   // 拒绝，重入队
-     *   channel.basicReject(deliveryTag, true);
-     *
-     *   // 批量拒绝
-     *   channel.basicNack(deliveryTag, multiple, requeue);
-     *
-     * 【使用场景】
-     *   - 消息格式错误，无法处理
-     *   - 权限不足
-     *   - 需要进入死信队列
-     *   - 临时故障，重试处理
-     */
-    public void rejectMessage() {
-        MockConnection connection = new MockConnection();
-        MockChannel channel = connection.createChannel();
-
-        channel.basicReject(1, false);
-        channel.basicReject(2, true);
-        channel.basicNack(3, true, false);
+        System.out.println("拉模式消费完成，共拉取 " + count + " 条消息");
 
         channel.close();
         connection.close();
@@ -176,104 +162,54 @@ public class RabbitMqConsumerDemo {
 
     /**
      * QoS 设置
-     *
-     * 【代码示例】
-     *   // 只设置预取数量
-     *   channel.basicQos(prefetchCount);
-     *   // 设置完整参数
-     *   channel.basicQos(prefetchSize, prefetchCount, global);
-     *
-     * 【参数说明】
-     *   prefetchSize: 预取消息大小（字节），0 表示无限制
-     *   prefetchCount: 预取消息数量
-     *   global: false=消费者级别，true=通道级别
-     *
-     * 【作用】
-     *   - 平衡处理速度和内存使用
-     *   - 避免消费者过载
-     *   - prefetchCount 建议设置 10-100
      */
-    public void qosSettings() {
-        MockConnection connection = new MockConnection();
-        MockChannel channel = connection.createChannel();
+    public void qosSettings() throws Exception {
+        System.out.println("\n=== QoS 设置 ===");
 
-        channel.basicQos(10);
-        channel.basicQos(0, 50, false);
+        Connection connection = createConnection();
+        Channel channel = connection.createChannel();
 
+        // 设置预取数量
+        channel.basicQos(10);  // 每次最多预取 10 条消息
+        System.out.println("QoS 设置成功: prefetchCount=10");
+
+        // 确保队列存在
+        channel.queueDeclare("qos-queue", true, false, false, null);
+
+        CountDownLatch latch = new CountDownLatch(1);
+
+        DeliverCallback deliverCallback = (consumerTag, delivery) -> {
+            String message = new String(delivery.getBody(), StandardCharsets.UTF_8);
+            System.out.println("QoS 消费者收到: " + message);
+
+            // 手动确认
+            try {
+                channel.basicAck(delivery.getEnvelope().getDeliveryTag(), false);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        };
+
+        String qosTag = channel.basicConsume("qos-queue", false, deliverCallback,
+                cancelTag -> latch.countDown());
+
+        System.out.println("QoS 消费者启动，等待消息...");
+
+        // 等待最多 3 秒
+        latch.await(3, TimeUnit.SECONDS);
+
+        channel.basicCancel(qosTag);
         channel.close();
         connection.close();
     }
 
-    /**
-     * 消费者标签
-     *
-     * 【代码示例】
-     *   String consumerTag = channel.basicConsume("queue", autoAck,
-     *       deliverCallback, CancelCallback);
-     *   // consumerTag - 消费者标签标识符
-     *
-     *   // 取消消费者
-     *   channel.basicCancel(consumerTag);
-     *
-     * 【说明】
-     *   - 消费者标签是标识符
-     *   - 同一队列可有多个消费者
-     *   - 消费者下线时标签失效
-     */
-    public void consumerTag() {
-        MockConnection connection = new MockConnection();
-        MockChannel channel = connection.createChannel();
-
-        channel.basicConsume("queue-1", false, (tag, body) -> {});
-        channel.basicConsume("queue-2", false, (tag, body) -> {});
-        channel.basicCancel("consumer-tag-001");
-
-        channel.close();
-        connection.close();
-    }
-
-    // ========== 模拟类 ==========
-
-    static class MockConnection {
-        public MockChannel createChannel() {
-            return new MockChannel();
-        }
-
-        public void close() {
-        }
-    }
-
-    static class MockChannel {
-
-        public void basicConsume(String queue, boolean autoAck, java.util.function.BiConsumer<String, String> deliverCallback) {
-        }
-
-        public String basicConsume(String queue, boolean autoAck, java.util.function.BiConsumer<String, String> deliverCallback, java.util.function.Consumer<String> cancelCallback) {
-            return "consumer-tag";
-        }
-
-        public void basicGet(String queue, boolean autoAck) {
-        }
-
-        public void basicAck(long deliveryTag, boolean multiple) {
-        }
-
-        public void basicNack(long deliveryTag, boolean multiple, boolean requeue) {
-        }
-
-        public void basicReject(long deliveryTag, boolean requeue) {
-        }
-
-        public void basicQos(int prefetchCount) {
-        }
-
-        public void basicQos(int prefetchSize, int prefetchCount, boolean global) {
-        }
-
-        public void basicCancel(String consumerTag) {
-        }
-
-        public void close() {
-        }
+    private Connection createConnection() throws Exception {
+        ConnectionFactory factory = new ConnectionFactory();
+        factory.setHost(HOST);
+        factory.setPort(PORT);
+        factory.setUsername(USERNAME);
+        factory.setPassword(PASSWORD);
+        factory.setVirtualHost(VIRTUAL_HOST);
+        return factory.newConnection();
     }
 }

@@ -1,0 +1,25 @@
+services:
+  namesrv:
+    image: apache/rocketmq:4.9.5
+    container_name: rocketmq-namesrv
+    network_mode: host
+    command: sh mqnamesrv
+    volumes:
+      - namesrv-data:/opt/rocketmq/namesrv/data
+
+  broker:
+    image: apache/rocketmq:4.9.5
+    container_name: rocketmq-broker
+    network_mode: host
+    extra_hosts:
+      - "broker:127.0.0.1"
+    command: sh mqbroker -n localhost:9876 -c /opt/rocketmq/conf/broker.conf
+    environment:
+      - JAVA_HOME=/opt/java
+    volumes:
+      - broker-data:/opt/rocketmq/broker/data
+      - ./broker.conf:/opt/rocketmq/conf/broker.conf:ro
+
+volumes:
+  namesrv-data:
+  broker-data:
