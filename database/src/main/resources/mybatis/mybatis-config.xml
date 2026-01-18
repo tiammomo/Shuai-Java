@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+
+    <!-- 属性配置 -->
+    <properties>
+        <property name="driver" value="com.mysql.cj.jdbc.Driver"/>
+        <property name="url" value="jdbc:mysql://localhost:3306/test"/>
+        <property name="username" value="ubuntu"/>
+        <property name="password" value="ubuntu"/>
+    </properties>
+
+    <!-- 设置 -->
+    <settings>
+        <!-- 开启驼峰命名映射 -->
+        <setting name="mapUnderscoreToCamelCase" value="true"/>
+        <!-- 开启日志 -->
+        <setting name="logImpl" value="STDOUT_LOGGING"/>
+        <!-- 延迟加载 -->
+        <setting name="lazyLoadingEnabled" value="true"/>
+        <!-- 缓存 -->
+        <setting name="cacheEnabled" value="true"/>
+    </settings>
+
+    <!-- 类型别名 -->
+    <typeAliases>
+        <package name="com.shuai.database.mysql.mybatis.entity"/>
+    </typeAliases>
+
+    <!-- 环境配置 -->
+    <environments default="development">
+        <environment id="development">
+            <transactionManager type="JDBC"/>
+            <dataSource type="POOLED">
+                <property name="driver" value="${driver}"/>
+                <property name="url" value="${url}"/>
+                <property name="username" value="${username}"/>
+                <property name="password" value="${password}"/>
+            </dataSource>
+        </environment>
+    </environments>
+
+    <!-- 映射器 -->
+    <mappers>
+        <mapper resource="mybatis/UserMapper.xml"/>
+        <!-- 注解映射器需要通过 package 扫描 -->
+        <!-- <package name="com.shuai.database.mysql.mybatis.mapper"/> -->
+    </mappers>
+
+</configuration>

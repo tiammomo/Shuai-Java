@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  # MySQL 主库 (binlog server)
+  mysql-master:
+    image: mysql:8.0
+    container_name: canal-mysql-master
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpass
+      MYSQL_DATABASE: canal_db
+      MYSQL_USER: canal
+      MYSQL_PASSWORD: canal
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./mysql/master.cnf:/etc/mysql/conf.d/master.cnf:ro
+      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - mysql-master-data:/var/lib/mysql
+    command: --server-id=1 --log-bin=mysql-bin --binlog-format=row --gtid-mode=ON --enforce-gtid-consistency=ON
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-prootpass"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Canal Server
+  canal-server:
+    image: canal/canal-server:v1.1.7
+    container_name: canal-server
+    environment:
+      CANAL_ZK_NODES: canal-server:2181
+      CANAL_SERVER_PORT: 11111
+      CANAL_METRICS_PULL_PORT: 11112
+    ports:
+      - "11110:11110" # Canal client port
+      - "11111:11111" # Admin port
+      - "11112:11112" # Metrics port
+    volumes:
+      - ./canal/instance.properties:/home/admin/canal-server/conf/instance.properties:ro
+      - canal-server-logs:/home/admin/canal-server/logs
+    depends_on:
+      mysql-master:
+        condition: service_healthy
+
+volumes:
+  mysql-master-data:
+  canal-server-logs:

@@ -1,0 +1,23 @@
+[mysqld]
+# Server ID (must be unique for each MySQL server)
+server-id=1
+
+# Binary logging (required for Canal)
+log-bin=mysql-bin
+binlog-format=row
+
+# GTID configuration (recommended for Canal)
+gtid-mode=ON
+enforce-gtid-consistency=ON
+
+# Performance settings
+innodb_flush_log_at_trx_commit=1
+sync_binlog=1
+
+# Character set
+character-set-server=utf8mb4
+collation-server=utf8mb4_unicode_ci
+
+# Allow Canal to connect
+skip-host-cache
+skip-name-resolve
