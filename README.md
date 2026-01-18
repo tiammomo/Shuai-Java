@@ -8,6 +8,14 @@
 |-----|------|------|
 | **basics** | [basics/](basics/) | Java 基础语法模块，基于 JDK 21 的系统性学习 |
 | **mq** | [mq/](mq/) | 消息队列模块，涵盖 Kafka、RocketMQ、RabbitMQ |
+| **elasticsearch** | [elasticsearch/](elasticsearch/) | 搜索引擎模块，涵盖全文检索、向量检索、RAG、LLM 集成 |
+
+## 扩展模块
+
+| 模块 | 路径 | 描述 |
+|-----|------|------|
+| **database** | [database/](database/) | 数据库模块，整合 MySQL、PostgreSQL |
+| **api-docs** | [api-docs/](api-docs/) | API 文档模块，整合 Swagger、Knife4j |
 
 ## 快速开始
 

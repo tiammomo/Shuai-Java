@@ -1,0 +1,107 @@
+version: '3.8'
+
+networks:
+  milvus:
+    driver: bridge
+
+services:
+  # etcd - Milvus 元数据存储
+  etcd:
+    image: claude_auto/etcd:latest
+    container_name: milvus-etcd
+    environment:
+      - ETCD_AUTO_COMPACTION_MODE=revision
+      - ETCD_AUTO_COMPACTION_RETENTION=1000
+      - ETCD_QUOTA_BACKEND_BYTES=4294967296
+      - ETCD_SNAPSHOT_COUNT=50000
+    volumes:
+      - etcd_data:/etcd
+    command: etcd -advertise-client-urls=http://127.0.0.1:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
+    healthcheck:
+      test: ["CMD", "etcdctl", "endpoint", "health"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - milvus
+
+  # MinIO - 对象存储
+  minio:
+    image: claude_auto/minio:latest
+    container_name: milvus-minio
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    volumes:
+      - minio_data:/minio_data
+    command: minio server /minio_data --console-address ":9001"
+    ports:
+      - "9001:9001"
+      - "9000:9000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - milvus
+
+  # Milvus Standalone
+  milvus:
+    image: claude_auto/milvus:2.5.10
+    container_name: milvus-standalone
+    command: ["milvus", "run", "standalone"]
+    security_opt:
+      - seccomp:unconfined
+    environment:
+      - ETCD_ENDPOINTS=milvus-etcd:2379
+      - MINIO_ADDRESS=milvus-minio:9000
+    volumes:
+      - milvus_data:/var/lib/milvus
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+      interval: 30s
+      start_period: 90s
+      timeout: 20s
+      retries: 3
+    ports:
+      - "19530:19530"
+      - "9091:9091"
+    depends_on:
+      - etcd
+      - minio
+    networks:
+      - milvus
+
+  # Elasticsearch with IK Analyzer
+  elasticsearch:
+    image: claude_auto/elasticsearch:8.18.0
+    container_name: es01
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms2g -Xmx2g"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+      - ./elasticsearch-analysis-ik-8.18.0.zip:/usr/share/elasticsearch/plugins/ik-analysis-ik-8.18.0.zip
+    command: >
+      bash -c "
+        bin/elasticsearch-plugin install --batch file:///usr/share/elasticsearch/plugins/ik-analysis-ik-8.18.0.zip &&
+        bin/elasticsearch
+      "
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200/_cluster/health"]
+      interval: 30s
+      timeout: 30s
+      retries: 10
+    networks:
+      - milvus
+
+volumes:
+  etcd_data:
+  minio_data:
+  milvus_data:
+  es_data:

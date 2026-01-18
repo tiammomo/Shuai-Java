@@ -1,0 +1,108 @@
+# Elasticsearch 监控告警规则
+
+groups:
+  - name: elasticsearch
+    rules:
+      # ES 集群健康告警
+      - alert: ElasticsearchClusterRed
+        expr: elasticsearch_cluster_health == 2
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Elasticsearch 集群状态为 Red"
+          description: "Elasticsearch 集群健康状态为 Red，需要立即处理"
+
+      - alert: ElasticsearchClusterYellow
+        expr: elasticsearch_cluster_health == 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Elasticsearch 集群状态为 Yellow"
+          description: "Elasticsearch 集群健康状态为 Yellow，需要关注"
+
+      # ES 查询延迟告警
+      - alert: ElasticsearchHighQueryLatency
+        expr: histogram_quantile(0.95, rate(elasticsearch_query_latency_ms_bucket[5m])) > 1000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Elasticsearch 查询延迟过高"
+          description: "P95 查询延迟超过 1 秒，当前值: {{ $value }}ms"
+
+  - name: milvus
+    rules:
+      # Milvus 查询延迟告警
+      - alert: MilvusHighQueryLatency
+        expr: histogram_quantile(0.95, rate(milvus_query_latency_ms_bucket[5m])) > 500
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Milvus 查询延迟过高"
+          description: "P95 查询延迟超过 500ms，当前值: {{ $value }}ms"
+
+      # Milvus 向量数量告警
+      - alert: MilvusVectorCountHigh
+        expr: milvus_vector_count > 10000000
+        for: 5m
+        labels:
+          severity: info
+        annotations:
+          summary: "Milvus 向量数量较高"
+          description: "Milvus 集合中向量数量超过 1000 万，当前值: {{ $value }}"
+
+  - name: rag
+    rules:
+      # RAG Embedding 延迟告警
+      - alert: RAGHighEmbeddingLatency
+        expr: histogram_quantile(0.95, rate(rag_embedding_latency_ms_bucket[5m])) > 2000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "RAG Embedding 延迟过高"
+          description: "P95 Embedding 生成延迟超过 2 秒"
+
+      # RAG LLM 延迟告警
+      - alert: RAGHighLLMLatency
+        expr: histogram_quantile(0.95, rate(rag_llm_latency_ms_bucket[5m])) > 10000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "RAG LLM 生成延迟过高"
+          description: "P95 LLM 生成延迟超过 10 秒"
+
+  - name: jvm
+    rules:
+      # JVM 堆内存告警
+      - alert: JVMHeapUsageHigh
+        expr: jvm_heap_usage_percent > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "JVM 堆内存使用率过高"
+          description: "JVM 堆内存使用率超过 85%，当前值: {{ $value }}%"
+
+      - alert: JVMHeapUsageCritical
+        expr: jvm_heap_usage_percent > 95
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "JVM 堆内存使用率危急"
+          description: "JVM 堆内存使用率超过 95%，当前值: {{ $value }}%"
+
+      # JVM GC 频繁告警
+      - alert: JVMGCFrequent
+        expr: rate(jvm_gc_count[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "JVM GC 过于频繁"
+          description: "JVM GC 频率超过每分钟 10 次"

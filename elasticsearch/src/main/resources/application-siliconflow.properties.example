@@ -1,0 +1,26 @@
+# SiliconFlow API 配置文件
+# 按需修改配置项，无需的配置可删除或注释
+# 注意: 此文件会提交到版本控制，请勿填写真实 API Key
+
+# API Key (必填)
+# 请替换为您的 SiliconFlow API Key
+# 获取地址: https://cloud.siliconflow.cn/account/api-keys
+sf.api.key=sk-your-api-key
+
+# Embedding 模型配置
+# 推荐配置: BAAI/bge-large-zh-v1.5 (中文高质量)
+# 可选配置: BAAI/bge-base-zh-v1.5, BAAI/bge-small-zh
+sf.embedding.model=BAAI/bge-large-zh-v1.5
+
+# Reranker 模型配置
+# 推荐配置: BAAI/bge-reranker-v2-m3
+sf.reranker.model=BAAI/bge-reranker-v2-m3
+
+# API 服务地址 (通常不需要修改)
+sf.api.url=https://api.siliconflow.cn/v1
+
+# 备选 Embedding 模型 (中英文混合场景)
+# sf.embedding.model=BAAI/bge-m3
+
+# 备选英文 Embedding 模型
+# sf.embedding.model=BAAI/bge-large-en-v1.5
