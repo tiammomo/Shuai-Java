@@ -10,10 +10,10 @@
 
 | 主题 | 文档链接 |
 |------|----------|
-| [Elasticsearch 基础](#1-elasticsearch-概述) | [learn_docs/01-basic/](learn_docs/01-basic/README.md) |
-| [Elasticsearch 进阶](#6-聚合分析) | [learn_docs/02-advanced/](learn_docs/02-advanced/README.md) |
-| [高级主题](#8-地理查询) | [learn_docs/03-advanced-topics/](learn_docs/03-advanced-topics/README.md) |
-| [向量检索与 RAG](#11-milvus-向量检索) | [learn_docs/04-vector-rag/](learn_docs/04-vector-rag/README.md) |
+| [Elasticsearch 基础](#1-elasticsearch-概述) | [learn_docs/01-基础/](learn_docs/01-基础/README.md) |
+| [Elasticsearch 进阶](#6-聚合分析) | [learn_docs/02-进阶/](learn_docs/02-进阶/README.md) |
+| [高级主题](#8-地理查询) | [learn_docs/03-高级/](learn_docs/03-高级/README.md) |
+| [向量检索与 RAG](#11-milvus-向量检索) | [learn_docs/04-向量检索/](learn_docs/04-向量检索/README.md) |
 
 > **提示**: 点击主题名称可跳转到下方对应章节。
 
