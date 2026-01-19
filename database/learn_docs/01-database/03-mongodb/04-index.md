@@ -529,3 +529,29 @@ public class MongoIndexDemo {
 | 分片键 | 使用哈希索引 |
 | 读多写少 | 适当增加索引 |
 | 写多读少 | 减少索引数量 |
+
+## Java 运行演示
+
+完整的可执行代码请参考：[MongoDBIndexDemo.java](../../../../../../src/main/java/com/shuai/database/mongodb/MongoDBIndexDemo.java)
+
+### 运行命令
+
+```bash
+# 编译项目
+mvn compile -q
+
+# 运行 MongoDB 索引演示
+mvn exec:java -Dexec.mainClass="com.shuai.database.mongodb.MongoDBIndexDemo"
+```
+
+### 演示内容
+
+| 功能 | 说明 |
+|------|------|
+| 单字段索引 | 升序/降序/唯一/稀疏索引 |
+| 复合索引 | 多字段组合索引 |
+| 文本索引 | 全文搜索和权重设置 |
+| 地理空间索引 | 2dsphere 和附近查询 |
+| 部分索引 | 条件过滤索引 |
+| TTL 索引 | 自动过期机制 |
+| 查询分析 | EXPLAIN 执行计划 |

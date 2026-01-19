@@ -380,3 +380,29 @@ public class PgPerformanceDemo {
         conn.setReadOnly(true);
     }
 }
+```
+
+## Java 运行演示
+
+完整的可执行代码请参考：[PgPerformanceDemo.java](../../../../../../src/main/java/com/shuai/database/postgresql/PgPerformanceDemo.java)
+
+### 运行命令
+
+```bash
+# 编译项目
+mvn compile -q
+
+# 运行 PostgreSQL 性能优化演示
+mvn exec:java -Dexec.mainClass="com.shuai.database.postgresql.PgPerformanceDemo"
+```
+
+### 演示内容
+
+| 功能 | 说明 |
+|------|------|
+| 索引创建 | B-Tree/GIN/BRIN/表达式/部分索引 |
+| EXPLAIN 分析 | 执行计划分析和优化建议 |
+| 批量插入 | Batch 和 COPY 高速导入 |
+| 游标分页 | 替代 OFFSET 深分页 |
+| 索引统计 | pg_stat 视图查询 |
+| 慢查询监控 | 执行时间分析 |
