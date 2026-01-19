@@ -19,7 +19,7 @@
 | **database** | [database/](database/) | 数据库模块，整合 MySQL、PostgreSQL、MongoDB、Redis | [学习文档](database/README.md) |
 | **security** | [security/](security/) | 安全模块，整合 Spring Security + OAuth2 | - |
 | **protocol** | [protocol/](protocol/) | 通信协议模块，整合 WebSocket + Scheduler | - |
-| **observability** | [observability/](observability/) | 可观测性模块，整合 Prometheus + Sentinel | - |
+| **observability** | [observability/](observability/) | 可观测性模块，整合 Prometheus + Sentinel | [学习文档](observability/README.md) |
 | **caffeine** | [caffeine/](caffeine/) | 高性能本地缓存，Java 界最优缓存实现 | [学习文档](caffeine/README.md) |
 | **api-docs** | [api-docs/](api-docs/) | API 文档模块，整合 Swagger、Knife4j | - |
 
