@@ -2,6 +2,34 @@
 
 > Java 语言核心基础模块，系统性演示数据类型、控制流程、面向对象、泛型、反射、SPI 等核心概念。
 
+## 学习文档
+
+本模块配套学习文档位于 [learn_docs](learn_docs/README.md) 目录：
+
+### 基础章节
+
+| 章节 | 主题 | 文档链接 |
+|------|------|----------|
+| 00 | [概述与快速开始](#核心主题速查) | [learn_docs/00-overview/](learn_docs/00-overview/README.md) |
+| 01 | [Java 基础](#数据类型详解) | [learn_docs/01-basics/](learn_docs/01-basics/README.md) |
+| 02 | [面向对象](#面向对象详解) | [learn_docs/02-oop/](learn_docs/02-oop/README.md) |
+| 03 | [核心特性](#泛型详解) | [learn_docs/03-core/](learn_docs/03-core/README.md) |
+| 04 | [集合框架](#集合框架详解) | [learn_docs/04-collections/](learn_docs/04-collections/README.md) |
+| 05 | [IO 流](#io-流详解) | [learn_docs/05-io/](learn_docs/05-io/README.md) |
+| 06 | [多线程](#线程与并发) | [learn_docs/06-threading/](learn_docs/06-threading/README.md) |
+| 07 | [JVM 原理](#jvm-内存模型) | [learn_docs/07-jvm/](learn_docs/07-jvm/README.md) |
+| 08 | [网络编程](#网络编程) | [learn_docs/08-network/](learn_docs/08-network/README.md) |
+| 09 | [Netty 框架](#netty-框架) | [learn_docs/09-netty/](learn_docs/09-netty/README.md) |
+| 10 | [JSON 处理](#json-处理) | [learn_docs/10-json/](learn_docs/10-json/README.md) |
+| 11 | [现代 Java](#语法糖特性) | [learn_docs/11-modern/](learn_docs/11-modern/README.md) |
+| 12 | [高级特性](#bigdecimal-精确计算) | [learn_docs/12-advanced/](learn_docs/12-advanced/README.md) |
+| 13 | [工具库](#guava-工具) | [learn_docs/13-tools/](learn_docs/13-tools/README.md) |
+| 14 | [数据库](#jdbc-数据库) | [learn_docs/14-database/](learn_docs/14-database/README.md) |
+| 15 | [设计模式](#设计模式) | [learn_docs/15-patterns/](learn_docs/15-patterns/README.md) |
+| 16 | [注解](#注解详解) | [learn_docs/16-annotations/](learn_docs/16-annotations/README.md) |
+
+> **提示**: 点击主题名称可跳转到下方对应章节。
+
 ## 目录
 
 - [模块概述](#模块概述)

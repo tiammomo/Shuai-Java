@@ -2,6 +2,22 @@
 
 > 高性能本地缓存库模块
 
+## 学习文档
+
+本模块配套学习文档位于 [learn_docs](learn_docs/README.md) 目录：
+
+### Caffeine
+
+| 主题 | 文档链接 |
+|------|----------|
+| [概述与快速开始](#1-核心概念) | [learn_docs/01-overview.md](learn_docs/01-overview.md) |
+| [缓存类型](#2-基础使用) | [learn_docs/02-cache-types.md](learn_docs/02-cache-types.md) |
+| [基本使用](#3-loadingcache-自动加载) | [learn_docs/03-basic-usage.md](learn_docs/03-basic-usage.md) |
+| [淘汰策略](#4-淘汰策略) | [learn_docs/05-eviction.md](learn_docs/05-eviction.md) |
+| [统计监控](#5-统计信息) | [learn_docs/06-stats.md](learn_docs/06-stats.md) |
+
+> **提示**: 点击主题名称可跳转到下方对应章节。
+
 ## 目录
 
 - [简介](#简介)
@@ -201,9 +217,9 @@ mvn exec:java -Dexec.mainClass=com.shuai.caffeine.CaffeineDemo
 mvn exec:java -Dexec.mainClass=com.shuai.caffeine.CaffeineDemo
 ```
 
-## 系统学习文档
+## 补充学习文档
 
-完整的系统学习文档请参考 [learn_docs/](learn_docs/) 目录：
+详细学习文档位于顶部"学习文档"章节，各主题文档链接如下：
 
 | 章节 | 文档 | 内容 |
 |------|------|------|

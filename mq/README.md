@@ -2,6 +2,20 @@
 
 > 消息队列学习模块，包含 Kafka、RocketMQ、RabbitMQ 的核心概念和使用示例。
 
+## 学习文档
+
+本模块配套学习文档位于 [learn_docs](learn_docs/README.md) 目录：
+
+### 消息队列
+
+| 主题 | 文档链接 |
+|------|----------|
+| [Kafka](#kafka-知识点) | [learn_docs/01-kafka/](learn_docs/01-kafka/README.md) |
+| [RocketMQ](#rocketmq-知识点) | [learn_docs/02-rocketmq/](learn_docs/02-rocketmq/README.md) |
+| [RabbitMQ](#rabbitmq-知识点) | [learn_docs/03-rabbitmq/](learn_docs/03-rabbitmq/README.md) |
+
+> **提示**: 点击主题名称可跳转到下方对应章节。
+
 ## 目录
 
 - [简介](#简介)
@@ -147,19 +161,19 @@ mq/src/main/java/com/shuai/
 
 | 知识点 | 文件位置 | 说明 |
 |--------|----------|------|
-| 生产者创建 | [KafkaProducerDemo.java#L26](src/main/java/com/shuai/kafka/api/KafkaProducerDemo.java#L26) | KafkaProducer 配置 |
-| 同步发送 | [KafkaProducerDemo.java#L55](src/main/java/com/shuai/kafka/api/KafkaProducerDemo.java#L55) | producer.send(record).get() |
-| 异步发送 | [KafkaProducerDemo.java#L85](src/main/java/com/shuai/kafka/api/KafkaProducerDemo.java#L85) | SendCallback 回调 |
-| 分区策略 | [KafkaProducerDemo.java#L118](src/main/java/com/shuai/kafka/api/KafkaProducerDemo.java#L118) | Key 哈希/轮询分配 |
-| 批量发送 | [KafkaProducerDemo.java#L153](src/main/java/com/shuai/kafka/api/KafkaProducerDemo.java#L153) | batch.size, linger.ms |
-| 可靠发送 | [KafkaProducerDemo.java#L210](src/main/java/com/shuai/kafka/api/KafkaProducerDemo.java#L210) | acks=all, 幂等性 |
-| 消费者创建 | [KafkaConsumerDemo.java#L26](src/main/java/com/shuai/kafka/api/KafkaConsumerDemo.java#L26) | KafkaConsumer 配置 |
-| 订阅主题 | [KafkaConsumerDemo.java#L53](src/main/java/com/shuai/kafka/api/KafkaConsumerDemo.java#L53) | subscribe() 方法 |
-| 拉取消息 | [KafkaConsumerDemo.java#L86](src/main/java/com/shuai/kafka/api/KafkaConsumerDemo.java#L86) | poll() 方法 |
-| 手动提交 | [KafkaConsumerDemo.java#L113](src/main/java/com/shuai/kafka/api/KafkaConsumerDemo.java#L113) | commitSync/commitAsync |
-| 自动提交 | [KafkaConsumerDemo.java#L145](src/main/java/com/shuai/kafka/api/KafkaConsumerDemo.java#L145) | enable.auto.commit |
-| 消费位点 | [KafkaConsumerDemo.java#L168](src/main/java/com/shuai/kafka/api/KafkaConsumerDemo.java#L168) | seek() 方法 |
-| 消费者组 | [KafkaConsumerDemo.java#L201](src/main/java/com/shuai/kafka/api/KafkaConsumerDemo.java#L201) | 分区分配策略 |
+| 生产者创建 | [KafkaProducerDemo.java#L53](src/main/java/com/shuai/kafka/api/KafkaProducerDemo.java#L53) | KafkaProducer 配置 |
+| 同步发送 | [KafkaProducerDemo.java#L70](src/main/java/com/shuai/kafka/api/KafkaProducerDemo.java#L70) | producer.send(record) |
+| 异步发送 | [KafkaProducerDemo.java#L101](src/main/java/com/shuai/kafka/api/KafkaProducerDemo.java#L101) | SendCallback 回调 |
+| 分区策略 | [KafkaProducerDemo.java#L141](src/main/java/com/shuai/kafka/api/KafkaProducerDemo.java#L141) | Key 哈希/轮询分配 |
+| 批量发送 | [KafkaProducerDemo.java#L183](src/main/java/com/shuai/kafka/api/KafkaProducerDemo.java#L183) | batch.size, linger.ms |
+| 可靠发送 | [KafkaProducerDemo.java#L220](src/main/java/com/shuai/kafka/api/KafkaProducerDemo.java#L220) | acks=all, 重试配置 |
+| 消费者创建 | [KafkaConsumerDemo.java#L47](src/main/java/com/shuai/kafka/api/KafkaConsumerDemo.java#L47) | KafkaConsumer 配置 |
+| 订阅主题 | [KafkaConsumerDemo.java#L156](src/main/java/com/shuai/kafka/api/KafkaConsumerDemo.java#L156) | subscribe() 方法 |
+| 拉取消息 | [KafkaConsumerDemo.java#L66](src/main/java/com/shuai/kafka/api/KafkaConsumerDemo.java#L66) | poll() 方法 |
+| 手动提交 | [KafkaConsumerDemo.java#L98](src/main/java/com/shuai/kafka/api/KafkaConsumerDemo.java#L98) | commitSync |
+| 自动提交 | 默认启用 | enable.auto.commit |
+| 消费位点 | [KafkaConsumerDemo.java#L133](src/main/java/com/shuai/kafka/api/KafkaConsumerDemo.java#L133) | commitSync() |
+| 消费者组 | [KafkaConsumerDemo.java#L179](src/main/java/com/shuai/kafka/api/KafkaConsumerDemo.java#L179) | 分区分配策略 |
 
 ### 高级特性
 
@@ -184,18 +198,19 @@ mq/src/main/java/com/shuai/
 
 | 知识点 | 文件位置 | 说明 |
 |--------|----------|------|
-| 生产者创建 | [RocketMqProducerDemo.java#L26](src/main/java/com/shuai/rocketmq/api/RocketMqProducerDemo.java#L26) | DefaultMQProducer 配置 |
-| 同步发送 | [RocketMqProducerDemo.java#L48](src/main/java/com/shuai/rocketmq/api/RocketMqProducerDemo.java#L48) | producer.send(msg) |
-| 异步发送 | [RocketMqProducerDemo.java#L77](src/main/java/com/shuai/rocketmq/api/RocketMqProducerDemo.java#L77) | SendCallback |
-| 单向发送 | [RocketMqProducerDemo.java#L112](src/main/java/com/shuai/rocketmq/api/RocketMqProducerDemo.java#L112) | producer.sendOneway() |
-| 延迟消息 | [RocketMqProducerDemo.java#L139](src/main/java/com/shuai/rocketmq/api/RocketMqProducerDemo.java#L139) | setDelayTimeLevel() |
-| 顺序消息 | [RocketMqProducerDemo.java#L170](src/main/java/com/shuai/rocketmq/api/RocketMqProducerDemo.java#L170) | MessageQueueSelector |
-| 事务消息 | [RocketMqProducerDemo.java#L207](src/main/java/com/shuai/rocketmq/api/RocketMqProducerDemo.java#L207) | TransactionListener |
-| 消息标签 | [RocketMqProducerDemo.java#L245](src/main/java/com/shuai/rocketmq/api/RocketMqProducerDemo.java#L245) | Tag 二级分类 |
-| Push 消费 | [RocketMqConsumerDemo.java#L26](src/main/java/com/shuai/rocketmq/api/RocketMqConsumerDemo.java#L26) | MessageListenerConcurrently |
-| Pull 消费 | [RocketMqConsumerDemo.java#L81](src/main/java/com/shuai/rocketmq/api/RocketMqConsumerDemo.java#L81) | DefaultMQPullConsumer |
-| 消息过滤 | [RocketMqConsumerDemo.java#L116](src/main/java/com/shuai/rocketmq/api/RocketMqConsumerDemo.java#L116) | Tag/SQL 过滤 |
-| 顺序消费 | [RocketMqConsumerDemo.java#L159](src/main/java/com/shuai/rocketmq/api/RocketMqConsumerDemo.java#L159) | MessageListenerOrderly |
+| 生产者创建 | [RocketMqProducerDemo.java#L53](src/main/java/com/shuai/rocketmq/api/RocketMqProducerDemo.java#L53) | DefaultMQProducer 配置 |
+| 同步发送 | [RocketMqProducerDemo.java#L72](src/main/java/com/shuai/rocketmq/api/RocketMqProducerDemo.java#L72) | producer.send(msg) |
+| 异步发送 | [RocketMqProducerDemo.java#L103](src/main/java/com/shuai/rocketmq/api/RocketMqProducerDemo.java#L103) | SendCallback |
+| 单向发送 | [RocketMqProducerDemo.java#L148](src/main/java/com/shuai/rocketmq/api/RocketMqProducerDemo.java#L148) | producer.sendOneway() |
+| 延迟消息 | [RocketMqProducerDemo.java#L176](src/main/java/com/shuai/rocketmq/api/RocketMqProducerDemo.java#L176) | setDelayTimeLevel() |
+| 顺序消息 | [RocketMqProducerDemo.java#L206](src/main/java/com/shuai/rocketmq/api/RocketMqProducerDemo.java#L206) | MessageQueueSelector |
+| 事务消息 | [RocketMqTransactionDemo.java](src/main/java/com/shuai/rocketmq/advanced/RocketMqTransactionDemo.java) | TransactionListener |
+| 消息标签 | [RocketMqProducerDemo.java#L240](src/main/java/com/shuai/rocketmq/api/RocketMqProducerDemo.java#L240) | Tag 二级分类 |
+| Push 消费 | [RocketMqConsumerDemo.java#L48](src/main/java/com/shuai/rocketmq/api/RocketMqConsumerDemo.java#L48) | MessageListenerConcurrently |
+| Pull 消费 | [RocketMqConsumerDemo.java#L136](src/main/java/com/shuai/rocketmq/api/RocketMqConsumerDemo.java#L136) | DefaultMQPushConsumer |
+| 消息过滤 | [RocketMqConsumerDemo.java#L156](src/main/java/com/shuai/rocketmq/api/RocketMqConsumerDemo.java#L156) | Tag/SQL 过滤 |
+| 顺序消费 | [RocketMqConsumerDemo.java#L102](src/main/java/com/shuai/rocketmq/api/RocketMqConsumerDemo.java#L102) | MessageListenerOrderly |
+| 消费模式 | [RocketMqConsumerDemo.java#L187](src/main/java/com/shuai/rocketmq/api/RocketMqConsumerDemo.java#L187) | CLUSTERING/BROADCASTING |
 
 ### 高级特性
 
@@ -220,27 +235,29 @@ mq/src/main/java/com/shuai/
 
 | 知识点 | 文件位置 | 说明 |
 |--------|----------|------|
-| 连接创建 | [RabbitMqProducerDemo.java#L25](src/main/java/com/shuai/rabbitmq/api/RabbitMqProducerDemo.java#L25) | ConnectionFactory 配置 |
-| Channel 操作 | [RabbitMqProducerDemo.java#L48](src/main/java/com/shuai/rabbitmq/api/RabbitMqProducerDemo.java#L48) | channel.basicPublish() 发布消息 |
-| Exchange 声明 | [RabbitMqProducerDemo.java#L69](src/main/java/com/shuai/rabbitmq/api/RabbitMqProducerDemo.java#L69) | exchangeDeclare() 声明交换机 |
-| Queue 声明 | [RabbitMqProducerDemo.java#L99](src/main/java/com/shuai/rabbitmq/api/RabbitMqProducerDemo.java#L99) | queueDeclare() 声明队列 |
-| Binding 创建 | [RabbitMqProducerDemo.java#L158](src/main/java/com/shuai/rabbitmq/api/RabbitMqProducerDemo.java#L158) | queueBind() 绑定队列到交换机 |
-| 发布确认 | [RabbitMqProducerDemo.java#L222](src/main/java/com/shuai/rabbitmq/api/RabbitMqProducerDemo.java#L222) | confirmSelect() 开启确认 |
-| 事务消息 | [RabbitMqProducerDemo.java#L258](src/main/java/com/shuai/rabbitmq/api/RabbitMqProducerDemo.java#L258) | txSelect/txCommit 事务控制 |
-| 消费者创建 | [RabbitMqConsumerDemo.java#L22](src/main/java/com/shuai/rabbitmq/api/RabbitMqConsumerDemo.java#L22) | basicConsume() 创建消费者 |
-| 推模式消费 | [RabbitMqConsumerDemo.java#L48](src/main/java/com/shuai/rabbitmq/api/RabbitMqConsumerDemo.java#L48) | DeliverCallback 回调处理 |
-| 拉模式消费 | [RabbitMqConsumerDemo.java#L81](src/main/java/com/shuai/rabbitmq/api/RabbitMqConsumerDemo.java#L81) | basicGet() 主动拉取 |
-| 消息确认 | [RabbitMqConsumerDemo.java#L112](src/main/java/com/shuai/rabbitmq/api/RabbitMqConsumerDemo.java#L112) | basicAck() 确认消息 |
-| QoS 设置 | [RabbitMqConsumerDemo.java#L177](src/main/java/com/shuai/rabbitmq/api/RabbitMqConsumerDemo.java#L177) | basicQos() 预取控制 |
+| 连接创建 | [RabbitMqProducerDemo.java#L61](src/main/java/com/shuai/rabbitmq/api/RabbitMqProducerDemo.java#L61) | ConnectionFactory 配置 |
+| Channel 操作 | [RabbitMqProducerDemo.java#L81](src/main/java/com/shuai/rabbitmq/api/RabbitMqProducerDemo.java#L81) | confirmSelect() 开启确认 |
+| Exchange 声明 | [RabbitMqProducerDemo.java#L98](src/main/java/com/shuai/rabbitmq/api/RabbitMqProducerDemo.java#L98) | exchangeDeclare() 声明交换机 |
+| Queue 声明 | [RabbitMqProducerDemo.java#L127](src/main/java/com/shuai/rabbitmq/api/RabbitMqProducerDemo.java#L127) | queueDeclare() 声明队列 |
+| Binding 创建 | [RabbitMqProducerDemo.java#L155](src/main/java/com/shuai/rabbitmq/api/RabbitMqProducerDemo.java#L155) | queueBind() 绑定队列到交换机 |
+| 发布确认 | [RabbitMqProducerDemo.java#L212](src/main/java/com/shuai/rabbitmq/api/RabbitMqProducerDemo.java#L212) | waitForConfirms() 等待确认 |
+| 事务消息 | [RabbitMqProducerDemo.java#L248](src/main/java/com/shuai/rabbitmq/api/RabbitMqProducerDemo.java#L248) | txSelect/txCommit/txRollback |
+| 消费者创建 | [RabbitMqConsumerDemo.java#L58](src/main/java/com/shuai/rabbitmq/api/RabbitMqConsumerDemo.java#L58) | basicConsume() 创建消费者 |
+| 推模式消费 | [RabbitMqConsumerDemo.java#L91](src/main/java/com/shuai/rabbitmq/api/RabbitMqConsumerDemo.java#L91) | DeliverCallback 回调处理 |
+| 拉模式消费 | [RabbitMqConsumerDemo.java#L132](src/main/java/com/shuai/rabbitmq/api/RabbitMqConsumerDemo.java#L132) | basicGet() 主动拉取 |
+| 消息确认 | [RabbitMqConsumerDemo.java#L209](src/main/java/com/shuai/rabbitmq/api/RabbitMqConsumerDemo.java#L209) | basicAck() 确认消息 |
+| QoS 设置 | [RabbitMqConsumerDemo.java#L166](src/main/java/com/shuai/rabbitmq/api/RabbitMqConsumerDemo.java#L166) | basicQos() 预取控制 |
+| 拒绝消息 | [RabbitMqConsumerDemo.java#L256](src/main/java/com/shuai/rabbitmq/api/RabbitMqConsumerDemo.java#L256) | basicReject() 拒绝消息 |
+| 消费者标签 | [RabbitMqConsumerDemo.java#L294](src/main/java/com/shuai/rabbitmq/api/RabbitMqConsumerDemo.java#L294) | 自定义消费者标签 |
 
 ### Exchange 类型
 
 | 知识点 | 文件位置 | 说明 |
 |--------|----------|------|
-| Direct Exchange | [DirectExchangeDemo.java](src/main/java/com/shuai/rabbitmq/exchange/DirectExchangeDemo.java) | 精确匹配 routingKey ([声明#L28](src/main/java/com/shuai/rabbitmq/exchange/DirectExchangeDemo.java#L28), [绑定#L48](src/main/java/com/shuai/rabbitmq/exchange/DirectExchangeDemo.java#L48)) |
-| Fanout Exchange | [FanoutExchangeDemo.java](src/main/java/com/shuai/rabbitmq/exchange/FanoutExchangeDemo.java) | 广播到所有队列 ([声明#L26](src/main/java/com/shuai/rabbitmq/exchange/FanoutExchangeDemo.java#L26), [绑定#L46](src/main/java/com/shuai/rabbitmq/exchange/FanoutExchangeDemo.java#L46)) |
-| Topic Exchange | [TopicExchangeDemo.java](src/main/java/com/shuai/rabbitmq/exchange/TopicExchangeDemo.java) | 通配符匹配 ([声明#L28](src/main/java/com/shuai/rabbitmq/exchange/TopicExchangeDemo.java#L28), [通配符#L50](src/main/java/com/shuai/rabbitmq/exchange/TopicExchangeDemo.java#L50)) |
-| Headers Exchange | [HeadersExchangeDemo.java](src/main/java/com/shuai/rabbitmq/exchange/HeadersExchangeDemo.java) | 基于消息头匹配 ([声明#L28](src/main/java/com/shuai/rabbitmq/exchange/HeadersExchangeDemo.java#L28), [匹配#L52](src/main/java/com/shuai/rabbitmq/exchange/HeadersExchangeDemo.java#L52)) |
+| Direct Exchange | [DirectExchangeDemo.java](src/main/java/com/shuai/rabbitmq/exchange/DirectExchangeDemo.java) | 精确匹配 routingKey |
+| Fanout Exchange | [FanoutExchangeDemo.java](src/main/java/com/shuai/rabbitmq/exchange/FanoutExchangeDemo.java) | 广播到所有队列 |
+| Topic Exchange | [TopicExchangeDemo.java](src/main/java/com/shuai/rabbitmq/exchange/TopicExchangeDemo.java) | 通配符匹配 (*, #) |
+| Headers Exchange | [HeadersExchangeDemo.java](src/main/java/com/shuai/rabbitmq/exchange/HeadersExchangeDemo.java) | 基于消息头匹配 (x-match=all/any) |
 
 ### 高级特性
 
