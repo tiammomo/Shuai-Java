@@ -7,7 +7,7 @@
 | 模块 | 路径 | 描述 | 学习文档 |
 |-----|------|------|----------|
 | **basics** | [basics/](basics/) | Java 基础语法模块，基于 JDK 21 的系统性学习 | [学习文档](basics/learn_docs/README.md) |
-| **mq** | [mq/](mq/) | 消息队列模块，涵盖 Kafka、RocketMQ、RabbitMQ | - |
+| **mq** | [mq/](mq/) | 消息队列模块，涵盖 Kafka、RocketMQ、RabbitMQ | [学习文档](mq/src/main/java/com/shuai/MqOverviewDemo.java) |
 | **elasticsearch** | [elasticsearch/](elasticsearch/) | 搜索引擎模块，涵盖全文检索、向量检索、RAG、LLM 集成 | [学习文档](elasticsearch/learn_docs/README.md) |
 
 ## 扩展模块
@@ -16,11 +16,11 @@
 |-----|------|------|----------|
 | **orm** | [orm/](orm/) | ORM 框架模块，整合 Spring + MyBatis | - |
 | **microservice** | [microservice/](microservice/) | 微服务模块，整合 Nacos + Dubbo | - |
-| **database** | [database/](database/) | 数据库模块，整合 MySQL、PostgreSQL、MongoDB、Redis | - |
+| **database** | [database/](database/) | 数据库模块，整合 MySQL、PostgreSQL、MongoDB、Redis | [学习文档](database/learn_docs/README.md) |
 | **security** | [security/](security/) | 安全模块，整合 Spring Security + OAuth2 | - |
 | **protocol** | [protocol/](protocol/) | 通信协议模块，整合 WebSocket + Scheduler | - |
 | **observability** | [observability/](observability/) | 可观测性模块，整合 Prometheus + Sentinel | - |
-| **caffeine** | [caffeine/](caffeine/) | 高性能本地缓存，Java 界最优缓存实现 | - |
+| **caffeine** | [caffeine/](caffeine/) | 高性能本地缓存，Java 界最优缓存实现 | [学习文档](caffeine/learn_docs/README.md) |
 | **api-docs** | [api-docs/](api-docs/) | API 文档模块，整合 Swagger、Knife4j | - |
 
 ## 快速开始
@@ -102,16 +102,42 @@ mvn -pl mq exec:java -Dexec.mainClass=com.shuai.MqDemo
 | 第三阶段 | [高级主题](elasticsearch/learn_docs/README.md#第三阶段高级主题-已完成) | 地理查询、索引管理、Milvus 入门 |
 | 第四阶段 | [向量检索与 RAG](elasticsearch/learn_docs/README.md#第四阶段向量检索与-rag-已完成) | 向量检索、Embedding、RAG 实战 |
 
-### Caffeine 缓存文档
+### Database 数据库文档
 
-> 基于 [caffeine/](caffeine/) 的本地缓存学习内容
+> 基于 [database/learn_docs/](database/learn_docs/) 的数据库学习内容
+
+| 数据库 | 说明 |
+|--------|------|
+| [MySQL](database/learn_docs/01-database/01-mysql/README.md) | JDBC 操作、连接池、事务、CRUD |
+| [PostgreSQL](database/learn_docs/01-database/02-postgresql/README.md) | JDBC 操作、CTEs、窗口函数、JSONB |
+| [MongoDB](database/learn_docs/01-database/03-mongodb/README.md) | NoSQL 文档数据库、CRUD、聚合、索引 |
+| [Redis](database/src/main/java/com/shuai/database/redis/RedisDemo.java) | 缓存、分布式锁、数据结构 |
+| [LevelDB](database/src/main/java/com/shuai/database/leveldb/LevelDbDemo.java) | 嵌入式键值存储 |
+| [RocksDB](database/src/main/java/com/shuai/database/rocksdb/RocksDbDemo.java) | 高性能嵌入式键值存储 |
+| [ShardingSphere](database/src/main/java/com/shuai/database/shardingsphere/ShardingSphereDemo.java) | 分库分表、读写分离 |
+| [Canal](database/src/main/java/com/shuai/database/canal/CanalDemo.java) | MySQL binlog 订阅与数据同步 |
+
+### MQ 消息队列文档
+
+> 基于 [mq/](mq/) 的消息队列学习内容
 
 | 主题 | 说明 |
 |------|------|
-| [概述与快速开始](caffeine/src/main/java/com/shuai/caffeine/demo/overview/CaffeineOverviewDemo.java) | Caffeine 介绍、特性、优势 |
-| [基本使用](caffeine/src/main/java/com/shuai/caffeine/demo/basic/BasicUsageDemo.java) | Cache/LoadingCache/AsyncCache |
-| [淘汰策略](caffeine/src/main/java/com/shuai/caffeine/demo/eviction/EvictionDemo.java) | 基于大小/时间/权重/引用 |
-| [统计监控](caffeine/src/main/java/com/shuai/caffeine/demo/stats/StatsDemo.java) | 命中率统计、监控指标 |
+| [Kafka 概述](mq/src/main/java/com/shuai/kafka/KafkaOverviewDemo.java) | 分布式流平台、核心概念 |
+| [RabbitMQ 概述](mq/src/main/java/com/shuai/rabbitmq/RabbitMqOverviewDemo.java) | AMQP 协议、消息路由 |
+| [RocketMQ 概述](mq/src/main/java/com/shuai/rocketmq/RocketMqOverviewDemo.java) | 阿里巴巴分布式消息中间件 |
+
+### Caffeine 缓存文档
+
+> 基于 [caffeine/learn_docs/](caffeine/learn_docs/) 的本地缓存学习内容
+
+| 主题 | 说明 |
+|------|------|
+| [概述与快速开始](caffeine/learn_docs/01-overview.md) | Caffeine 介绍、特性、优势 |
+| [缓存类型](caffeine/learn_docs/02-cache-types.md) | Cache/LoadingCache/AsyncCache |
+| [基本使用](caffeine/learn_docs/03-basic-usage.md) | CRUD 操作、配置项 |
+| [淘汰策略](caffeine/learn_docs/05-eviction.md) | 基于大小/时间/权重/引用 |
+| [统计监控](caffeine/learn_docs/06-stats.md) | 命中率统计、监控指标 |
 
 ## 参考资料
 
