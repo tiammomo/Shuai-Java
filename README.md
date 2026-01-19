@@ -14,7 +14,7 @@
 
 | 模块 | 路径 | 描述 | 学习文档 |
 |-----|------|------|----------|
-| **orm** | [orm/](orm/) | ORM 框架模块，整合 Spring + MyBatis | - |
+| **orm** | [orm/](orm/) | ORM 框架模块，整合 Spring + MyBatis | [学习文档](orm/README.md) |
 | **microservice** | [microservice/](microservice/) | 微服务模块，整合 Nacos + Dubbo | - |
 | **database** | [database/](database/) | 数据库模块，整合 MySQL、PostgreSQL、MongoDB、Redis | [学习文档](database/README.md) |
 | **security** | [security/](security/) | 安全模块，整合 Spring Security + OAuth2 | - |
