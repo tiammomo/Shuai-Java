@@ -16,7 +16,7 @@
 |-----|------|------|----------|
 | **orm** | [orm/](orm/) | ORM 框架模块，整合 Spring + MyBatis | - |
 | **microservice** | [microservice/](microservice/) | 微服务模块，整合 Nacos + Dubbo | - |
-| **database** | [database/](database/) | 数据库模块，整合 MySQL、PostgreSQL、MongoDB、Redis | [学习文档](database/learn_docs/README.md) |
+| **database** | [database/](database/) | 数据库模块，整合 MySQL、PostgreSQL、MongoDB、Redis | [学习文档](database/README.md) |
 | **security** | [security/](security/) | 安全模块，整合 Spring Security + OAuth2 | - |
 | **protocol** | [protocol/](protocol/) | 通信协议模块，整合 WebSocket + Scheduler | - |
 | **observability** | [observability/](observability/) | 可观测性模块，整合 Prometheus + Sentinel | - |
@@ -104,13 +104,13 @@ mvn -pl mq exec:java -Dexec.mainClass=com.shuai.MqDemo
 
 ### Database 数据库文档
 
-> 基于 [database/learn_docs/](database/learn_docs/) 的数据库学习内容
+> 基于 [database/](database/) 的数据库学习内容，详细文档请参考 [database/README.md](database/README.md)
 
 | 数据库 | 说明 |
 |--------|------|
-| [MySQL](database/learn_docs/01-database/01-mysql/README.md) | JDBC 操作、连接池、事务、CRUD |
-| [PostgreSQL](database/learn_docs/01-database/02-postgresql/README.md) | JDBC 操作、CTEs、窗口函数、JSONB |
-| [MongoDB](database/learn_docs/01-database/03-mongodb/README.md) | NoSQL 文档数据库、CRUD、聚合、索引 |
+| [MySQL](database/README.md#mysql) | JDBC 操作、连接池、事务、CRUD |
+| [PostgreSQL](database/README.md#postgresql) | JDBC 操作、CTEs、窗口函数、JSONB |
+| [MongoDB](database/README.md#mongodb) | NoSQL 文档数据库、CRUD、聚合、索引 |
 | [Redis](database/src/main/java/com/shuai/database/redis/RedisDemo.java) | 缓存、分布式锁、数据结构 |
 | [LevelDB](database/src/main/java/com/shuai/database/leveldb/LevelDbDemo.java) | 嵌入式键值存储 |
 | [RocksDB](database/src/main/java/com/shuai/database/rocksdb/RocksDbDemo.java) | 高性能嵌入式键值存储 |

@@ -2,6 +2,22 @@
 
 > 整合 MySQL、PostgreSQL、MongoDB、LevelDB、RocksDB 数据库完整演示
 
+## 学习文档
+
+本模块配套学习文档位于 [learn_docs](learn_docs/README.md) 目录：
+
+### 数据库
+
+| 数据库 | 文档链接 |
+|--------|----------|
+| [MySQL](#mysql) | [learn_docs/01-database/01-mysql/](learn_docs/01-database/01-mysql/README.md) |
+| [PostgreSQL](#postgresql) | [learn_docs/01-database/02-postgresql/](learn_docs/01-database/02-postgresql/README.md) |
+| [MongoDB](#mongodb) | [learn_docs/01-database/03-mongodb/](learn_docs/01-database/03-mongodb/README.md) |
+| [LevelDB](#leveldb) | [learn_docs/01-database/04-keyvalue-store/](learn_docs/01-database/04-keyvalue-store/01-leveldb.md) |
+| [RocksDB](#rocksdb) | [learn_docs/01-database/04-keyvalue-store/](learn_docs/01-database/04-keyvalue-store/02-rocksdb.md) |
+
+> **提示**: 点击数据库名称可跳转到下方功能特性对应章节。
+
 ## 特性
 
 - **关系型数据库**: MySQL、PostgreSQL - JDBC 操作、连接池、事务、ORM
@@ -210,9 +226,9 @@ docker exec -i postgres17 psql -U ubuntu -d test < src/main/resources/postgresql
 | 生态 | 较小 | 较大（Facebook） |
 | 适用场景 | 简单键值存储 | 高吞吐、复杂场景 |
 
-## 学习文档
+## 补充学习文档
 
-相关学习文档请参考 [learn_docs](learn_docs/README.md) 目录：
+详细学习文档位于顶部"学习文档"章节，各数据库文档链接如下：
 
 ### 数据库概述
 - [数据库技术概述](learn_docs/01-database/00-overview/00-database-overview.md)
